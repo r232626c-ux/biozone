@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+venv/
+__pycache__/
+
+# environment
+.env
+
+# logs
+*.log
+
+# builds
+dist/
+build/
+
+electron/postgres/pgsql/

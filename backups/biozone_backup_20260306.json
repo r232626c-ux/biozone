@@ -1,0 +1,3059 @@
+{
+  "timestamp": "2026-03-06T16:47:31.421718",
+  "tables": {
+    "users": [
+      {
+        "role": "Admin",
+        "username": "bchonzi",
+        "id": 1,
+        "email": "chonzibasil@gmail.com",
+        "hashed_password": "$2b$12$YZU5KgtvTFASRX3TQVRwN.i3u.46l/s08qpa.eD/9ig5vPU7/LY1m",
+        "is_active": true
+      }
+    ],
+    "patients": [
+      {
+        "first_name": "fdfdf",
+        "id": 2,
+        "dob": null,
+        "gender": null,
+        "funding": "CASH (ZWL)",
+        "member_suffix": null,
+        "clinical_data": null,
+        "sample_date": null,
+        "last_name": "fdfd",
+        "facility": null,
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "SEKAI",
+        "id": 15,
+        "dob": "1967-05-09",
+        "gender": "Female",
+        "funding": "Cellmed Zimplats USD",
+        "member_suffix": "01",
+        "clinical_data": "Chest pains",
+        "sample_date": null,
+        "last_name": "MAYA",
+        "facility": "NECTACARE",
+        "member_number": "2018019768",
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "jm j,,,",
+        "id": 5,
+        "dob": null,
+        "gender": null,
+        "funding": "CASH (ZWL)",
+        "member_suffix": null,
+        "clinical_data": null,
+        "sample_date": null,
+        "last_name": "jkkjk",
+        "facility": null,
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "NYASHA",
+        "id": 18,
+        "dob": "1987-04-29",
+        "gender": "Male",
+        "funding": "Cellmed Premium USD",
+        "member_suffix": "0",
+        "clinical_data": "ABSCESS R/o DM",
+        "sample_date": null,
+        "last_name": "CHIKOSI",
+        "facility": "NECTACARE HEALTH CENTRE",
+        "member_number": "2018029456",
+        "doctor_name": "DR GOZHO",
+        "request_id": null
+      },
+      {
+        "first_name": "JOSPHAT",
+        "id": 33,
+        "dob": "1978-08-19",
+        "gender": "Female",
+        "funding": "CASH (ZWL)",
+        "member_suffix": null,
+        "clinical_data": "HPV",
+        "sample_date": null,
+        "last_name": "DICK",
+        "facility": "NECTACARE ",
+        "member_number": null,
+        "doctor_name": "DR NDABVONGA",
+        "request_id": null
+      },
+      {
+        "first_name": "FRANCIS",
+        "id": 35,
+        "dob": "1987-05-25",
+        "gender": "Male",
+        "funding": "FMH Gold USD",
+        "member_suffix": "0",
+        "clinical_data": "Urethral  discharge",
+        "sample_date": null,
+        "last_name": "MANDAZA",
+        "facility": "ATLAS",
+        "member_number": "97300406661",
+        "doctor_name": "MAHACHI",
+        "request_id": null
+      },
+      {
+        "first_name": "PANASHE",
+        "id": 34,
+        "dob": "2000-12-17",
+        "gender": "Male",
+        "funding": "FMH Gold USD",
+        "member_suffix": "0",
+        "clinical_data": "Urethral discharge",
+        "sample_date": null,
+        "last_name": "MAKUSHA",
+        "facility": "ATLAS",
+        "member_number": "63066301",
+        "doctor_name": "MAHACHI",
+        "request_id": null
+      },
+      {
+        "first_name": "CHARITY",
+        "id": 11,
+        "dob": "1973-04-09",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "UTI",
+        "sample_date": null,
+        "last_name": "ADAMS",
+        "facility": "Walk in Client",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "DORCAS",
+        "id": 40,
+        "dob": "1992-01-17",
+        "gender": "Female",
+        "funding": "Cellmed Zesa Group Medical Fund",
+        "member_suffix": "1",
+        "clinical_data": "Anaemia, grade 1 hypertension",
+        "sample_date": null,
+        "last_name": "MUTSAGO",
+        "facility": "NECTACARE",
+        "member_number": "2015455284",
+        "doctor_name": "DR NDABVONGA",
+        "request_id": null
+      },
+      {
+        "first_name": "YVONNE",
+        "id": 30,
+        "dob": "1998-08-04",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": null,
+        "sample_date": null,
+        "last_name": "MATEKO",
+        "facility": "GOLDEN STAIRS",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "CHRISTINA",
+        "id": 32,
+        "dob": "1973-07-14",
+        "gender": "Female",
+        "funding": "Cellmed Zesa Group Medical Fund",
+        "member_suffix": "0",
+        "clinical_data": "Peripheral Neuropathy",
+        "sample_date": null,
+        "last_name": "CHAIMA",
+        "facility": "NECTACARE",
+        "member_number": "2015533994",
+        "doctor_name": "DR GOZHO",
+        "request_id": null
+      },
+      {
+        "first_name": "RYAN",
+        "id": 19,
+        "dob": "2015-05-29",
+        "gender": "Male",
+        "funding": "Cellmed CMED RTGS",
+        "member_suffix": "04",
+        "clinical_data": "Chronic Scrotal Pain",
+        "sample_date": null,
+        "last_name": "MUSIZVINGOZA",
+        "facility": "NECTACARE",
+        "member_number": "2012968897",
+        "doctor_name": "DR NDABVONGA",
+        "request_id": null
+      },
+      {
+        "first_name": "COLLEEN",
+        "id": 1,
+        "dob": "2025-09-02",
+        "gender": "Female",
+        "funding": "CASH (ZWL)",
+        "member_suffix": null,
+        "clinical_data": "HEADACHE",
+        "sample_date": null,
+        "last_name": "KANGARA",
+        "facility": "NECTACARE",
+        "member_number": null,
+        "doctor_name": "DR GOZHO",
+        "request_id": null
+      },
+      {
+        "first_name": "Mutenzwa",
+        "id": 7,
+        "dob": "1977-12-08",
+        "gender": "Male",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "Febrile",
+        "sample_date": null,
+        "last_name": "Daniel",
+        "facility": "GOLDEN STAIRS",
+        "member_number": null,
+        "doctor_name": "Dr S.T. Musakanda",
+        "request_id": null
+      },
+      {
+        "first_name": "EDWIN",
+        "id": 20,
+        "dob": "1980-06-30",
+        "gender": "Male",
+        "funding": "Cellmed Premium USD",
+        "member_suffix": "0",
+        "clinical_data": "HTN",
+        "sample_date": null,
+        "last_name": "CHIDAWA",
+        "facility": "NECTACARE",
+        "member_number": "2014146978",
+        "doctor_name": "DR NDABVONGA",
+        "request_id": null
+      },
+      {
+        "first_name": "P1-10",
+        "id": 4,
+        "dob": null,
+        "gender": null,
+        "funding": "CASH (ZWL)",
+        "member_suffix": null,
+        "clinical_data": null,
+        "sample_date": null,
+        "last_name": "Lycon",
+        "facility": "Matusadonha National Parks",
+        "member_number": null,
+        "doctor_name": "Dr Panashe Mundandishe",
+        "request_id": null
+      },
+      {
+        "first_name": "p1-14",
+        "id": 3,
+        "dob": "0001-01-01",
+        "gender": null,
+        "funding": "CASH (ZWL)",
+        "member_suffix": "Dr Mundandishe",
+        "clinical_data": null,
+        "sample_date": null,
+        "last_name": "Lycon",
+        "facility": "Matusadonha National Parks",
+        "member_number": null,
+        "doctor_name": "Dr Panashe Mundandishe",
+        "request_id": null
+      },
+      {
+        "first_name": "RODWELL",
+        "id": 25,
+        "dob": "1979-06-21",
+        "gender": "Male",
+        "funding": "Cellmed CMED RTGS",
+        "member_suffix": "0",
+        "clinical_data": "Hemorrhoids",
+        "sample_date": null,
+        "last_name": "BORERWE",
+        "facility": "NECTACARE",
+        "member_number": "2012970036",
+        "doctor_name": "DR NDABVONGA",
+        "request_id": null
+      },
+      {
+        "first_name": "P2-3",
+        "id": 8,
+        "dob": null,
+        "gender": null,
+        "funding": "CASH (ZWL)",
+        "member_suffix": null,
+        "clinical_data": null,
+        "sample_date": null,
+        "last_name": "Lycon",
+        "facility": "Matusadonha National Parks",
+        "member_number": null,
+        "doctor_name": "Dr Panashe Mundandishe",
+        "request_id": null
+      },
+      {
+        "first_name": "IVY",
+        "id": 24,
+        "dob": "1983-06-14",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "AuB",
+        "sample_date": null,
+        "last_name": "MUTAMBANENGWE",
+        "facility": "ATLAS",
+        "member_number": null,
+        "doctor_name": "Dr Hove",
+        "request_id": null
+      },
+      {
+        "first_name": "P2-6",
+        "id": 9,
+        "dob": null,
+        "gender": null,
+        "funding": "CASH (ZWL)",
+        "member_suffix": null,
+        "clinical_data": null,
+        "sample_date": null,
+        "last_name": "Lycon pictus",
+        "facility": "Matusadonha National Parks",
+        "member_number": null,
+        "doctor_name": "Dr Panashe Mundandishe",
+        "request_id": null
+      },
+      {
+        "first_name": "p1-8",
+        "id": 12,
+        "dob": "1993-04-24",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": "0",
+        "clinical_data": "HEADACHE",
+        "sample_date": null,
+        "last_name": "Lycon pictus",
+        "facility": "Matusadonha National Parks",
+        "member_number": "2015451117",
+        "doctor_name": "Dr Panashe Mundandishe",
+        "request_id": null
+      },
+      {
+        "first_name": "KUDZAI",
+        "id": 16,
+        "dob": "2001-01-03",
+        "gender": "Female",
+        "funding": "FMH Gold USD",
+        "member_suffix": "1",
+        "clinical_data": "STI",
+        "sample_date": null,
+        "last_name": "MURANDU",
+        "facility": "ATLAS",
+        "member_number": "97100010855",
+        "doctor_name": "Atlas",
+        "request_id": null
+      },
+      {
+        "first_name": "ZAHRA",
+        "id": 28,
+        "dob": "2007-07-31",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "VDS",
+        "sample_date": null,
+        "last_name": "MATIPANO",
+        "facility": "MEDCITY",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "TAWANDA",
+        "id": 10,
+        "dob": "2006-07-16",
+        "gender": "Male",
+        "funding": "Cellmed CMED RTGS",
+        "member_suffix": "2",
+        "clinical_data": "Gastritis",
+        "sample_date": null,
+        "last_name": "MACHINGAMBI",
+        "facility": "NECTACARE",
+        "member_number": "2012976349",
+        "doctor_name": "DR GOZHO",
+        "request_id": null
+      },
+      {
+        "first_name": "MITCHEL",
+        "id": 14,
+        "dob": "1997-07-01",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "Hot flushes, post partum fever",
+        "sample_date": null,
+        "last_name": "NGANDU",
+        "facility": "MEDCITY",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "BARBARA",
+        "id": 13,
+        "dob": "1983-01-08",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "?Subfertility",
+        "sample_date": null,
+        "last_name": "NYATUNGA",
+        "facility": "MEDCITY",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "KUDZAI",
+        "id": 31,
+        "dob": "1988-06-04",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "Viac screening done",
+        "sample_date": null,
+        "last_name": "MAREMBO",
+        "facility": "PARIRENYATWA",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "ESTERY",
+        "id": 21,
+        "dob": "1975-01-09",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "HPV",
+        "sample_date": null,
+        "last_name": "SEVENI",
+        "facility": "PARIRENYATWA",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "NICOLA",
+        "id": 26,
+        "dob": null,
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "STD SCREEN",
+        "sample_date": null,
+        "last_name": "KONDOS",
+        "facility": "MEDCITY",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "ZANRA",
+        "id": 27,
+        "dob": "2007-07-31",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "VDS",
+        "sample_date": null,
+        "last_name": "MATIPA",
+        "facility": "MEDCITY",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "Ropafadzo",
+        "id": 6,
+        "dob": "1993-04-24",
+        "gender": null,
+        "funding": "Cellmed Premium USD",
+        "member_suffix": "00",
+        "clinical_data": "Cluster headache",
+        "sample_date": null,
+        "last_name": "Magora",
+        "facility": "Nectacare Health Centre",
+        "member_number": "2015451117",
+        "doctor_name": "Dr Gozho",
+        "request_id": null
+      },
+      {
+        "first_name": "Matore",
+        "id": 17,
+        "dob": "1998-02-19",
+        "gender": "Female",
+        "funding": "Cellmed Premium USD",
+        "member_suffix": "01",
+        "clinical_data": "Gastritis",
+        "sample_date": null,
+        "last_name": "Sabina",
+        "facility": "NECTACARE HEALTH CENTRE",
+        "member_number": "2018029446",
+        "doctor_name": "DR GOZHO",
+        "request_id": null
+      },
+      {
+        "first_name": "TREVOR",
+        "id": 29,
+        "dob": "1980-07-03",
+        "gender": "Male",
+        "funding": "Cellmed Zesa Group Medical Fund",
+        "member_suffix": "0",
+        "clinical_data": "Pruritus",
+        "sample_date": null,
+        "last_name": "JAERA",
+        "facility": "Nectacare",
+        "member_number": "2015579542",
+        "doctor_name": "Dr Ndabvonga",
+        "request_id": null
+      },
+      {
+        "first_name": "BOTHWELL",
+        "id": 36,
+        "dob": "2014-11-24",
+        "gender": "Male",
+        "funding": "Cellmed Zesa Group Medical Fund",
+        "member_suffix": "04",
+        "clinical_data": "Urinary tract infection",
+        "sample_date": null,
+        "last_name": "MUPINI",
+        "facility": "NECTACARE",
+        "member_number": "2015453482",
+        "doctor_name": "DR GOZHO",
+        "request_id": null
+      },
+      {
+        "first_name": "Nyakutsikwa",
+        "id": 23,
+        "dob": "1986-10-12",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "VDS",
+        "sample_date": null,
+        "last_name": "Beverly",
+        "facility": "MEDCITY",
+        "member_number": null,
+        "doctor_name": "Medcity",
+        "request_id": null
+      },
+      {
+        "first_name": "JOSEPH",
+        "id": 22,
+        "dob": "1977-08-14",
+        "gender": "Male",
+        "funding": "Cellmed Premium USD",
+        "member_suffix": "00",
+        "clinical_data": "HTN",
+        "sample_date": null,
+        "last_name": "MUJONGONDI",
+        "facility": "Nectacare",
+        "member_number": "201296694",
+        "doctor_name": "Dr Ndabvonga",
+        "request_id": null
+      },
+      {
+        "first_name": "NOMPUMELELO",
+        "id": 37,
+        "dob": "1995-05-24",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "Gastritis",
+        "sample_date": null,
+        "last_name": "MPOFU",
+        "facility": "Walk in patient",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      },
+      {
+        "first_name": "CLEMENT",
+        "id": 38,
+        "dob": "1967-07-26",
+        "gender": "Male",
+        "funding": "Cellmed CMED RTGS",
+        "member_suffix": "0",
+        "clinical_data": "Erectile Disfunction",
+        "sample_date": null,
+        "last_name": "MURINDI",
+        "facility": "NECTACARE",
+        "member_number": "2012970394",
+        "doctor_name": "NDABVONGA",
+        "request_id": null
+      },
+      {
+        "first_name": "NONHLANHLA",
+        "id": 39,
+        "dob": "1981-05-25",
+        "gender": "Female",
+        "funding": "Cash - USD",
+        "member_suffix": null,
+        "clinical_data": "VDS",
+        "sample_date": null,
+        "last_name": "NDLOVU-MATAKA",
+        "facility": "MEDCITY",
+        "member_number": null,
+        "doctor_name": null,
+        "request_id": null
+      }
+    ],
+    "lab_tests": [
+      {
+        "name": "PSA",
+        "id": 1,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "CA-125",
+        "id": 2,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "CEA",
+        "id": 3,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "AFP",
+        "id": 4,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "CA 19-9",
+        "id": 5,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "CA 15-3",
+        "id": 6,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "CA 72-4",
+        "id": 7,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "Thyroglobulin",
+        "id": 8,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "Calcitonin",
+        "id": 9,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "Beta-2 Microglobulin",
+        "id": 10,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "NSE",
+        "id": 11,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "CYFRA 21-1",
+        "id": 12,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "LDH",
+        "id": 13,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "HE4",
+        "id": 14,
+        "category": "Tumor Markers"
+      },
+      {
+        "name": "HIV test",
+        "id": 15,
+        "category": "Serology"
+      },
+      {
+        "name": "BhCG",
+        "id": 16,
+        "category": "Serology"
+      },
+      {
+        "name": "Widal",
+        "id": 17,
+        "category": "Serology"
+      },
+      {
+        "name": "HbsAg",
+        "id": 18,
+        "category": "Serology"
+      },
+      {
+        "name": "HSV 1",
+        "id": 19,
+        "category": "Serology"
+      },
+      {
+        "name": "HSV 2",
+        "id": 20,
+        "category": "Serology"
+      },
+      {
+        "name": "HSV",
+        "id": 21,
+        "category": "Serology"
+      },
+      {
+        "name": "Syphilis",
+        "id": 22,
+        "category": "Serology"
+      },
+      {
+        "name": "H.pylori",
+        "id": 23,
+        "category": "Serology"
+      },
+      {
+        "name": "CRP",
+        "id": 24,
+        "category": "Serology"
+      },
+      {
+        "name": "RF",
+        "id": 25,
+        "category": "Serology"
+      },
+      {
+        "name": "TORCH",
+        "id": 26,
+        "category": "Serology"
+      },
+      {
+        "name": "ANA",
+        "id": 27,
+        "category": "Serology"
+      },
+      {
+        "name": "Allergy",
+        "id": 28,
+        "category": "Serology"
+      },
+      {
+        "name": "Urine Drug Test",
+        "id": 29,
+        "category": "Serology"
+      },
+      {
+        "name": "Hepatitis A IgM",
+        "id": 30,
+        "category": "Serology"
+      },
+      {
+        "name": "Hepatitis C Antibody",
+        "id": 31,
+        "category": "Serology"
+      },
+      {
+        "name": "Rubella",
+        "id": 32,
+        "category": "Serology"
+      },
+      {
+        "name": "Measles IgG/IgM",
+        "id": 33,
+        "category": "Serology"
+      },
+      {
+        "name": "Varicella-Zoster IgG/IgM",
+        "id": 34,
+        "category": "Serology"
+      },
+      {
+        "name": "COVID-19 IgG/IgM",
+        "id": 35,
+        "category": "Serology"
+      },
+      {
+        "name": "Dengue NS1 IgM/IgG",
+        "id": 36,
+        "category": "Serology"
+      },
+      {
+        "name": "Zika IgM",
+        "id": 37,
+        "category": "Serology"
+      },
+      {
+        "name": "Yellow Fever Antibody",
+        "id": 38,
+        "category": "Serology"
+      },
+      {
+        "name": "WBC",
+        "id": 39,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "RBC",
+        "id": 40,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "HB",
+        "id": 41,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "HCT",
+        "id": 42,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "MCV",
+        "id": 43,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "MCH",
+        "id": 44,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "MCHC",
+        "id": 45,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "RDW",
+        "id": 46,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "Platelets",
+        "id": 47,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "Neutrophils (%)",
+        "id": 48,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "Lymphocytes (%)",
+        "id": 49,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "Monocytes (%)",
+        "id": 50,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "Neutrophils",
+        "id": 51,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "Lymphocytes",
+        "id": 52,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "Monocytes",
+        "id": 53,
+        "category": "Full Blood Count (FBC)"
+      },
+      {
+        "name": "PDW",
+        "id": 54,
+        "category": "Hematology"
+      },
+      {
+        "name": "Reticulocyte Count",
+        "id": 55,
+        "category": "Hematology"
+      },
+      {
+        "name": "Peripheral Blood Smear",
+        "id": 56,
+        "category": "Hematology"
+      },
+      {
+        "name": "ESR",
+        "id": 57,
+        "category": "Hematology"
+      },
+      {
+        "name": "INR",
+        "id": 58,
+        "category": "Hematology"
+      },
+      {
+        "name": "D-Dimer",
+        "id": 59,
+        "category": "Hematology"
+      },
+      {
+        "name": "Fasting Blood Sugar",
+        "id": 60,
+        "category": "Hematology"
+      },
+      {
+        "name": "Folic Acid",
+        "id": 61,
+        "category": "Hematology"
+      },
+      {
+        "name": "Lactic acid",
+        "id": 62,
+        "category": "Hematology"
+      },
+      {
+        "name": "Serum Amylase",
+        "id": 63,
+        "category": "Hematology"
+      },
+      {
+        "name": "Serum Iron Levels",
+        "id": 64,
+        "category": "Hematology"
+      },
+      {
+        "name": "Retic Count",
+        "id": 65,
+        "category": "Hematology"
+      },
+      {
+        "name": "Sodium",
+        "id": 66,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "Potassium",
+        "id": 67,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "Chloride",
+        "id": 68,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "Bicarbonate",
+        "id": 69,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "Urea",
+        "id": 70,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "Creatinine",
+        "id": 71,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "Anion Gap (corrected)",
+        "id": 72,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "eGFR (CKD-EPI)",
+        "id": 73,
+        "category": "Urea & Electrolytes"
+      },
+      {
+        "name": "ALT",
+        "id": 74,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "AST",
+        "id": 75,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "ALP",
+        "id": 76,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "GGT",
+        "id": 77,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "Direct Bilirubin",
+        "id": 78,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "Total Bilirubin",
+        "id": 79,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "Albumin",
+        "id": 80,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "Total Protein",
+        "id": 81,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "Globulin",
+        "id": 82,
+        "category": "LFT (Liver Function Test)"
+      },
+      {
+        "name": "Glucose",
+        "id": 83,
+        "category": "Fluid Biochemistry"
+      },
+      {
+        "name": "Total Protein",
+        "id": 84,
+        "category": "Fluid Biochemistry"
+      },
+      {
+        "name": "Fluid Albumin",
+        "id": 85,
+        "category": "Fluid Biochemistry"
+      },
+      {
+        "name": "Chloride",
+        "id": 86,
+        "category": "Fluid Biochemistry"
+      },
+      {
+        "name": "LDH",
+        "id": 87,
+        "category": "Fluid Biochemistry"
+      },
+      {
+        "name": "Iron",
+        "id": 88,
+        "category": "Serum Iron Studies"
+      },
+      {
+        "name": "Transferrin",
+        "id": 89,
+        "category": "Serum Iron Studies"
+      },
+      {
+        "name": "% Iron saturation",
+        "id": 90,
+        "category": "Serum Iron Studies"
+      },
+      {
+        "name": "Ferritin",
+        "id": 91,
+        "category": "Serum Iron Studies"
+      },
+      {
+        "name": "TIBC",
+        "id": 92,
+        "category": "Serum Iron Studies"
+      },
+      {
+        "name": "Soluble Transferrin Receptor",
+        "id": 93,
+        "category": "Serum Iron Studies"
+      },
+      {
+        "name": "Calcium",
+        "id": 94,
+        "category": "CAMP"
+      },
+      {
+        "name": "Albumin",
+        "id": 95,
+        "category": "CAMP"
+      },
+      {
+        "name": "Magnesium",
+        "id": 96,
+        "category": "CAMP"
+      },
+      {
+        "name": "Phosphate",
+        "id": 97,
+        "category": "CAMP"
+      },
+      {
+        "name": "Corrected Calcium",
+        "id": 98,
+        "category": "CAMP"
+      },
+      {
+        "name": "Myoglobin",
+        "id": 99,
+        "category": "Cardiac Enzymes"
+      },
+      {
+        "name": "CK-MB",
+        "id": 100,
+        "category": "Cardiac Enzymes"
+      },
+      {
+        "name": "CK",
+        "id": 101,
+        "category": "Cardiac Enzymes"
+      },
+      {
+        "name": "AST",
+        "id": 102,
+        "category": "Cardiac Enzymes"
+      },
+      {
+        "name": "LDH",
+        "id": 103,
+        "category": "Cardiac Enzymes"
+      },
+      {
+        "name": "Cardiac Troponin I",
+        "id": 104,
+        "category": "Cardiac Enzymes"
+      },
+      {
+        "name": "Total Cholesterol",
+        "id": 105,
+        "category": "Lipid Profile"
+      },
+      {
+        "name": "Triglycerides",
+        "id": 106,
+        "category": "Lipid Profile"
+      },
+      {
+        "name": "HDL Cholesterol",
+        "id": 107,
+        "category": "Lipid Profile"
+      },
+      {
+        "name": "LDL Cholesterol",
+        "id": 108,
+        "category": "Lipid Profile"
+      },
+      {
+        "name": "VLDL Cholesterol",
+        "id": 109,
+        "category": "Lipid Profile"
+      },
+      {
+        "name": "NON-HDL Cholesterol",
+        "id": 110,
+        "category": "Lipid Profile"
+      },
+      {
+        "name": "Total Chol/HDL Ratio",
+        "id": 111,
+        "category": "Lipid Profile"
+      },
+      {
+        "name": "Serum Insulin",
+        "id": 112,
+        "category": "Insulin Test"
+      },
+      {
+        "name": "RPR",
+        "id": 113,
+        "category": "RPR, TPHA"
+      },
+      {
+        "name": "TPHA",
+        "id": 114,
+        "category": "RPR, TPHA"
+      },
+      {
+        "name": "IgG",
+        "id": 115,
+        "category": "H.pylori"
+      },
+      {
+        "name": "IgM",
+        "id": 116,
+        "category": "H.pylori"
+      },
+      {
+        "name": "Glycosylated Hb (%)",
+        "id": 117,
+        "category": "Glycosylated Hb (HbA1C)"
+      },
+      {
+        "name": "Estimated average glucose",
+        "id": 118,
+        "category": "Glycosylated Hb (HbA1C)"
+      },
+      {
+        "name": "Non-diabities mellitus",
+        "id": 119,
+        "category": "Glycosylated Hb (HbA1C)"
+      },
+      {
+        "name": "Diabetes mellitus",
+        "id": 120,
+        "category": "Glycosylated Hb (HbA1C)"
+      },
+      {
+        "name": "Toxoplasma (IgM)",
+        "id": 121,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "Toxoplasma (IgG)",
+        "id": 122,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "Rubella (IgM)",
+        "id": 123,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "Rubella (IgM)",
+        "id": 124,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "CMV (IgM)",
+        "id": 125,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "CMV (IgG)",
+        "id": 126,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "HSV 1 (IgG)",
+        "id": 127,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "HSV 1 (IgM)",
+        "id": 128,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "HSV 2 (IgG)",
+        "id": 129,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "HSV 2 (IgM)",
+        "id": 130,
+        "category": "Torch Screen"
+      },
+      {
+        "name": "CRP",
+        "id": 131,
+        "category": "CRP, HS CRP"
+      },
+      {
+        "name": "HS CRP",
+        "id": 132,
+        "category": "CRP, HS CRP"
+      },
+      {
+        "name": "CD4",
+        "id": 133,
+        "category": "CD4 Count"
+      },
+      {
+        "name": "CD4%",
+        "id": 134,
+        "category": "CD4 Count"
+      },
+      {
+        "name": "Patient: Prothrombin time",
+        "id": 135,
+        "category": "Clotting Profile"
+      },
+      {
+        "name": "Control: Prothrombin time",
+        "id": 136,
+        "category": "Clotting Profile"
+      },
+      {
+        "name": "INR",
+        "id": 137,
+        "category": "Clotting Profile"
+      },
+      {
+        "name": "APTT: Patient",
+        "id": 138,
+        "category": "Clotting Profile"
+      },
+      {
+        "name": "APTT: Control",
+        "id": 139,
+        "category": "Clotting Profile"
+      },
+      {
+        "name": "Estradiol",
+        "id": 140,
+        "category": "Female hormones"
+      },
+      {
+        "name": "Progesterone",
+        "id": 141,
+        "category": "Female hormones"
+      },
+      {
+        "name": "FSH",
+        "id": 142,
+        "category": "Female hormones"
+      },
+      {
+        "name": "LH",
+        "id": 143,
+        "category": "Female hormones"
+      },
+      {
+        "name": "Prolactin",
+        "id": 144,
+        "category": "Female hormones"
+      },
+      {
+        "name": "Testosterone",
+        "id": 145,
+        "category": "Female hormones"
+      },
+      {
+        "name": "Progesterone",
+        "id": 146,
+        "category": "Progesterone"
+      },
+      {
+        "name": "Folicular phase",
+        "id": 147,
+        "category": "Progesterone"
+      },
+      {
+        "name": "Luteal phase",
+        "id": 148,
+        "category": "Progesterone"
+      },
+      {
+        "name": "Post Menopause female",
+        "id": 149,
+        "category": "Progesterone"
+      },
+      {
+        "name": "Preg 1st Trimester",
+        "id": 150,
+        "category": "Progesterone"
+      },
+      {
+        "name": "Preg 2nd Trimester",
+        "id": 151,
+        "category": "Progesterone"
+      },
+      {
+        "name": "Preg 3rd Trimester",
+        "id": 152,
+        "category": "Progesterone"
+      },
+      {
+        "name": "Progesterone",
+        "id": 153,
+        "category": "Progesterone"
+      },
+      {
+        "name": "CSF CrAg",
+        "id": 154,
+        "category": "CrAg Test"
+      },
+      {
+        "name": "Serum CrAg",
+        "id": 155,
+        "category": "CrAg Test"
+      },
+      {
+        "name": "Detection LATEX TITRE",
+        "id": 156,
+        "category": "CrAg Test"
+      },
+      {
+        "name": "Control LATEX TITRE",
+        "id": 157,
+        "category": "CrAg Test"
+      },
+      {
+        "name": "TSH",
+        "id": 158,
+        "category": "Thyroid Function Test "
+      },
+      {
+        "name": "Free T3",
+        "id": 159,
+        "category": "Thyroid Function Test "
+      },
+      {
+        "name": "Free T4",
+        "id": 160,
+        "category": "Thyroid Function Test "
+      },
+      {
+        "name": "Blood Glucose (RBS)",
+        "id": 161,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Amylase",
+        "id": 162,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Lipase",
+        "id": 163,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Iron Studies",
+        "id": 164,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Ferritin",
+        "id": 165,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Transferrin",
+        "id": 166,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Vitamin B12",
+        "id": 167,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Folate",
+        "id": 168,
+        "category": "Chemistry Tests"
+      },
+      {
+        "name": "Salmonella paratyphi AH",
+        "id": 169,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Salmonella paratyphi BH",
+        "id": 170,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Salmonella paratyphi CH",
+        "id": 171,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Salmonella paratyphi AO",
+        "id": 172,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Salmonella paratyphi BO",
+        "id": 173,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Salmonella paratyphi CO",
+        "id": 174,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Salmonella typhi H",
+        "id": 175,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Salmonella typhi O",
+        "id": 176,
+        "category": "Widal Test"
+      },
+      {
+        "name": "Type",
+        "id": 177,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Appearance",
+        "id": 178,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Clarity",
+        "id": 179,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Clot",
+        "id": 180,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "WBC's",
+        "id": 181,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "RBC's",
+        "id": 182,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Lymphocytes",
+        "id": 183,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Polymophs",
+        "id": 184,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Other WBC's",
+        "id": 185,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Organisms",
+        "id": 186,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Protein",
+        "id": 187,
+        "category": "Fluid M/C/S"
+      },
+      {
+        "name": "Color",
+        "id": 188,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "Consistency",
+        "id": 189,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "Occult blood",
+        "id": 190,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "WBC",
+        "id": 191,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "RBC",
+        "id": 192,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "Mucus",
+        "id": 193,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "Isospora belli",
+        "id": 194,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "Cryprosporidium",
+        "id": 195,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "Pitparasites",
+        "id": 196,
+        "category": "Rectal Swab M/C/S"
+      },
+      {
+        "name": "Type",
+        "id": 197,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Color",
+        "id": 198,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Clarity",
+        "id": 199,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "WBC",
+        "id": 200,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "RBC",
+        "id": 201,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Epithelial cells",
+        "id": 202,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Trichomonas Vaginalis",
+        "id": 203,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Bacteria",
+        "id": 204,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Scistosoma",
+        "id": 205,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Casts",
+        "id": 206,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Yeasts",
+        "id": 207,
+        "category": "Urine Microscopy"
+      },
+      {
+        "name": "Type",
+        "id": 208,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Color",
+        "id": 209,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Clarity",
+        "id": 210,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Bacteria",
+        "id": 211,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "S.G",
+        "id": 212,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "P.H",
+        "id": 213,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Protein",
+        "id": 214,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Glucose",
+        "id": 215,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Ketones",
+        "id": 216,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Urobilinogen",
+        "id": 217,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "Bilirubin",
+        "id": 218,
+        "category": "Urine Chem"
+      },
+      {
+        "name": "U-Albumin",
+        "id": 219,
+        "category": "Urine Albumin Creatinine Ratio"
+      },
+      {
+        "name": "U-Creatine",
+        "id": 220,
+        "category": "Urine Albumin Creatinine Ratio"
+      },
+      {
+        "name": "U-Albumin/Crea Ration",
+        "id": 221,
+        "category": "Urine Albumin Creatinine Ratio"
+      },
+      {
+        "name": "Amphetamine",
+        "id": 222,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Barbiturate",
+        "id": 223,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Buprenorphine",
+        "id": 224,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Benzodiazepine",
+        "id": 225,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Ecstacy",
+        "id": 226,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Methamphetamine",
+        "id": 227,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Methadone",
+        "id": 228,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Opiates",
+        "id": 229,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Oxycodone",
+        "id": 230,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Phencyclidne",
+        "id": 231,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Antidepressants",
+        "id": 232,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Marijuana",
+        "id": 233,
+        "category": "Urine Drug Test"
+      },
+      {
+        "name": "Color",
+        "id": 234,
+        "category": "Stool M/C/S"
+      },
+      {
+        "name": "Consistency",
+        "id": 235,
+        "category": "Stool M/C/S"
+      },
+      {
+        "name": "WBC",
+        "id": 236,
+        "category": "Stool M/C/S"
+      },
+      {
+        "name": "RBS",
+        "id": 237,
+        "category": "Stool M/C/S"
+      },
+      {
+        "name": "Mucus",
+        "id": 238,
+        "category": "Stool M/C/S"
+      },
+      {
+        "name": "Parasites",
+        "id": 239,
+        "category": "Stool M/C/S"
+      },
+      {
+        "name": "Appearance",
+        "id": 240,
+        "category": "Sputum AAFBS"
+      },
+      {
+        "name": "ZN Slide 1",
+        "id": 241,
+        "category": "Sputum AAFBS"
+      },
+      {
+        "name": "ZN Slide 2",
+        "id": 242,
+        "category": "Sputum AAFBS"
+      },
+      {
+        "name": "ZN Slide 3",
+        "id": 243,
+        "category": "Sputum AAFBS"
+      },
+      {
+        "name": "Gram stain",
+        "id": 244,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Bacteria",
+        "id": 245,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "WBC",
+        "id": 246,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "RBC",
+        "id": 247,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Epithelial cells",
+        "id": 248,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Clue cells",
+        "id": 249,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "T-Vaginalis",
+        "id": 250,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Yeasts/Buds",
+        "id": 251,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Other",
+        "id": 252,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "WBC",
+        "id": 253,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Clue cells",
+        "id": 254,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Lactobacilli",
+        "id": 255,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Yeasts/Buds",
+        "id": 256,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Organisms",
+        "id": 257,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Other",
+        "id": 258,
+        "category": "Swab M/C/S"
+      },
+      {
+        "name": "Epithelial cells",
+        "id": 259,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "Appearance",
+        "id": 260,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "WBC",
+        "id": 261,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "RBC",
+        "id": 262,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "Organisms",
+        "id": 263,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "Other",
+        "id": 264,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "ZN STAIN",
+        "id": 265,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "GRAM STAIN",
+        "id": 266,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "ZN Slide 3",
+        "id": 267,
+        "category": "Sputum M/C/S"
+      },
+      {
+        "name": "Gene Xpert",
+        "id": 268,
+        "category": "Sputum for Gene Xpert"
+      },
+      {
+        "name": "Malaria Test",
+        "id": 269,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Urine Culture",
+        "id": 270,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Blood Culture",
+        "id": 271,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Sputum Culture",
+        "id": 272,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Stool Culture",
+        "id": 273,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Throat Swab Culture",
+        "id": 274,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Antibiotic Sensitivity Test",
+        "id": 275,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Urinalysis",
+        "id": 276,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Microscopy",
+        "id": 277,
+        "category": "Microbiology"
+      },
+      {
+        "name": "KOH Prep",
+        "id": 278,
+        "category": "Microbiology"
+      },
+      {
+        "name": "Fungal Culture",
+        "id": 279,
+        "category": "Microbiology"
+      },
+      {
+        "name": "CSF Culture",
+        "id": 280,
+        "category": "Microbiology"
+      },
+      {
+        "name": "PCR TB",
+        "id": 281,
+        "category": "TB Tests"
+      },
+      {
+        "name": "Tuberculosis GeneXpert",
+        "id": 282,
+        "category": "TB Tests"
+      },
+      {
+        "name": "Mantoux Test",
+        "id": 283,
+        "category": "TB Tests"
+      },
+      {
+        "name": "TB Culture",
+        "id": 284,
+        "category": "TB Tests"
+      },
+      {
+        "name": "AFB Smear",
+        "id": 285,
+        "category": "TB Tests"
+      },
+      {
+        "name": "lblParameter_757",
+        "id": 286,
+        "category": "Hepatitis A"
+      },
+      {
+        "name": "HBeAg",
+        "id": 287,
+        "category": "Hepatitis B"
+      },
+      {
+        "name": "HBsAb",
+        "id": 288,
+        "category": "Hepatitis B"
+      },
+      {
+        "name": "HBsAg",
+        "id": 289,
+        "category": "Hepatitis B"
+      },
+      {
+        "name": "HBeAb",
+        "id": 290,
+        "category": "Hepatitis B"
+      },
+      {
+        "name": "HBcAb",
+        "id": 291,
+        "category": "Hepatitis B"
+      },
+      {
+        "name": "HPV 16",
+        "id": 292,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 18",
+        "id": 293,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 31",
+        "id": 294,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 33",
+        "id": 295,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 35",
+        "id": 296,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 39",
+        "id": 297,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 45",
+        "id": 298,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 51",
+        "id": 299,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 52",
+        "id": 300,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 56",
+        "id": 301,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 58",
+        "id": 302,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 59",
+        "id": 303,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 66",
+        "id": 304,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 68",
+        "id": 305,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 6",
+        "id": 306,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 11",
+        "id": 307,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 40",
+        "id": 308,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 42",
+        "id": 309,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 43",
+        "id": 310,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 44",
+        "id": 311,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 54",
+        "id": 312,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 61",
+        "id": 313,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 70",
+        "id": 314,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 72",
+        "id": 315,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 81",
+        "id": 316,
+        "category": "HPV Tests"
+      },
+      {
+        "name": "HPV 16",
+        "id": 317,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 18",
+        "id": 318,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 31",
+        "id": 319,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 33",
+        "id": 320,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 35",
+        "id": 321,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 39",
+        "id": 322,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 45",
+        "id": 323,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 51",
+        "id": 324,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 52",
+        "id": 325,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 56",
+        "id": 326,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 58",
+        "id": 327,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 59",
+        "id": 328,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 66",
+        "id": 329,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 68",
+        "id": 330,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HPV 51/56/66/68",
+        "id": 331,
+        "category": "HPV HR PCR Tests"
+      },
+      {
+        "name": "HIV RNA (Viral Load)",
+        "id": 332,
+        "category": "Viral Load"
+      },
+      {
+        "name": "HPV 6",
+        "id": 333,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 11",
+        "id": 334,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 40",
+        "id": 335,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 42",
+        "id": 336,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 43",
+        "id": 337,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 44",
+        "id": 338,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 54",
+        "id": 339,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 61",
+        "id": 340,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 70",
+        "id": 341,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 72",
+        "id": 342,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "HPV 81",
+        "id": 343,
+        "category": "HPV LR PCR Tests"
+      },
+      {
+        "name": "Determine",
+        "id": 344,
+        "category": "HIV Test"
+      },
+      {
+        "name": "CHEMBIO",
+        "id": 345,
+        "category": "HIV Test"
+      },
+      {
+        "name": "INSTI",
+        "id": 346,
+        "category": "HIV Test"
+      },
+      {
+        "name": "Final Result",
+        "id": 347,
+        "category": "HIV Test"
+      },
+      {
+        "name": "Neisseria gonorrhoeae",
+        "id": 348,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Chlamydia trachomatis",
+        "id": 349,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Treponema pallidum",
+        "id": 350,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Trichomonas vaginalis",
+        "id": 351,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Ureaplasma urealyticum",
+        "id": 352,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Ureaplasma parvum",
+        "id": 353,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Mycoplasma genitalium",
+        "id": 354,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Mycoplasma hominis",
+        "id": 355,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "HSV 1",
+        "id": 356,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "HSV 2",
+        "id": 357,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Candida Albicans",
+        "id": 358,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Gardnerella vaginalis",
+        "id": 359,
+        "category": "STI 12PCR Panel"
+      },
+      {
+        "name": "Neisseria gonorrhoeae",
+        "id": 360,
+        "category": "STI 6 PCR Panel"
+      },
+      {
+        "name": "Chlamydia trachomatis",
+        "id": 361,
+        "category": "STI 6 PCR Panel"
+      },
+      {
+        "name": "Treponema pallidum",
+        "id": 362,
+        "category": "STI 6 PCR Panel"
+      },
+      {
+        "name": "Ureaplasma urealyticum",
+        "id": 363,
+        "category": "STI 6 PCR Panel"
+      },
+      {
+        "name": "Mycoplasma genitalium",
+        "id": 364,
+        "category": "STI 6 PCR Panel"
+      },
+      {
+        "name": "Mycoplasma hominis",
+        "id": 365,
+        "category": "STI 6 PCR Panel"
+      },
+      {
+        "name": "DNA Extraction",
+        "id": 366,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "BRCA 1/2 Mutation Analysis",
+        "id": 367,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "HIV Viral Load",
+        "id": 368,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "Hepatitis B Viral Load",
+        "id": 369,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "Hepatitis C Viral Load",
+        "id": 370,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "COVID-19 Ab",
+        "id": 371,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "Influenza PCR",
+        "id": 372,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "RSV PCR",
+        "id": 373,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "HBV Genotyping",
+        "id": 374,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "HCV Genotyping",
+        "id": 375,
+        "category": "Molecular Tests"
+      },
+      {
+        "name": "Whole Genome Sequencing",
+        "id": 376,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "Whole Exome Sequencing",
+        "id": 377,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "RNA Sequencing",
+        "id": 378,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "Cancer Gene Panel",
+        "id": 379,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "Hereditary Cancer Panel",
+        "id": 380,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "Pharmacogenomics Panel",
+        "id": 381,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "Mitochondrial Genome Sequencing",
+        "id": 382,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "Microbiome Sequencing",
+        "id": 383,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "BRCA NGS",
+        "id": 384,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "HLA Typing NGS",
+        "id": 385,
+        "category": "NGS (Next-Generation Sequencing)"
+      },
+      {
+        "name": "NIPT (Non-Invasive Prenatal Test)",
+        "id": 386,
+        "category": "Prenatal / Pregnancy"
+      },
+      {
+        "name": "BhCG Quantitative",
+        "id": 387,
+        "category": "Prenatal / Pregnancy"
+      },
+      {
+        "name": "Fetal DNA Screening",
+        "id": 388,
+        "category": "Prenatal / Pregnancy"
+      },
+      {
+        "name": "Maternal Serum Screening",
+        "id": 389,
+        "category": "Prenatal / Pregnancy"
+      },
+      {
+        "name": "Amniocentesis Genetic Panel",
+        "id": 390,
+        "category": "Prenatal / Pregnancy"
+      },
+      {
+        "name": "Quad Screening",
+        "id": 391,
+        "category": "Prenatal / Pregnancy"
+      },
+      {
+        "name": "Standard Paternity Test",
+        "id": 392,
+        "category": "Paternity & Forensics"
+      },
+      {
+        "name": "Extended Family Test",
+        "id": 393,
+        "category": "Paternity & Forensics"
+      },
+      {
+        "name": "Forensic DNA Profiling",
+        "id": 394,
+        "category": "Paternity & Forensics"
+      },
+      {
+        "name": "Ancestry DNA Testing",
+        "id": 395,
+        "category": "Paternity & Forensics"
+      },
+      {
+        "name": "Y-STR Profiling",
+        "id": 396,
+        "category": "Paternity & Forensics"
+      },
+      {
+        "name": "mtDNA Profiling",
+        "id": 397,
+        "category": "Paternity & Forensics"
+      },
+      {
+        "name": "Food Allergy Panel",
+        "id": 398,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Environmental Allergy Panel",
+        "id": 399,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Drug Allergy Panel",
+        "id": 400,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Egg Allergy",
+        "id": 401,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Milk Allergy",
+        "id": 402,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Fish Allergy",
+        "id": 403,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Nuts Allergy",
+        "id": 404,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Pollen Allergy",
+        "id": 405,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Dust Mite Allergy",
+        "id": 406,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Protia Allergy Test",
+        "id": 407,
+        "category": "Allergy Tests"
+      },
+      {
+        "name": "Alcohol Level",
+        "id": 408,
+        "category": "Toxicology"
+      },
+      {
+        "name": "Heavy Metals Panel",
+        "id": 409,
+        "category": "Toxicology"
+      },
+      {
+        "name": "Lead",
+        "id": 410,
+        "category": "Toxicology"
+      },
+      {
+        "name": "Arsenic",
+        "id": 411,
+        "category": "Toxicology"
+      },
+      {
+        "name": "Mercury",
+        "id": 412,
+        "category": "Toxicology"
+      },
+      {
+        "name": "Comprehensive Drug Screening",
+        "id": 413,
+        "category": "Toxicology"
+      },
+      {
+        "name": "Prescription Drug Monitoring",
+        "id": 414,
+        "category": "Toxicology"
+      },
+      {
+        "name": "Water Microbiology",
+        "id": 415,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Water Chemical Analysis",
+        "id": 416,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Food Pathogen Test",
+        "id": 417,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Salmonella Test",
+        "id": 418,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Listeria Test",
+        "id": 419,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "E.coli O157:H7 Test",
+        "id": 420,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Food Heavy Metals",
+        "id": 421,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Mycotoxin Screening",
+        "id": 422,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Pesticide Residue Test",
+        "id": 423,
+        "category": "Food & Water Safety"
+      },
+      {
+        "name": "Respiratory Panel PCR",
+        "id": 424,
+        "category": "Infectious Disease Panels"
+      },
+      {
+        "name": "Gastrointestinal PCR Panel",
+        "id": 425,
+        "category": "Infectious Disease Panels"
+      },
+      {
+        "name": "Meningitis PCR Panel",
+        "id": 426,
+        "category": "Infectious Disease Panels"
+      },
+      {
+        "name": "Sepsis PCR Panel",
+        "id": 427,
+        "category": "Infectious Disease Panels"
+      },
+      {
+        "name": "Zoonotic Diseases Panel",
+        "id": 428,
+        "category": "Infectious Disease Panels"
+      }
+    ],
+    "lab_requests": [
+      {
+        "id": 1,
+        "notes": null,
+        "patient_id": 1,
+        "status": "Completed",
+        "created_at": "2026-02-20 15:22:46.200168"
+      },
+      {
+        "id": 2,
+        "notes": null,
+        "patient_id": 2,
+        "status": "Completed",
+        "created_at": "2026-02-20 15:44:32.383677"
+      },
+      {
+        "id": 25,
+        "notes": null,
+        "patient_id": 25,
+        "status": "Completed",
+        "created_at": "2026-03-04 09:40:20.728833"
+      },
+      {
+        "id": 4,
+        "notes": null,
+        "patient_id": 4,
+        "status": "Partially Completed",
+        "created_at": "2026-02-23 13:19:50.334307"
+      },
+      {
+        "id": 5,
+        "notes": null,
+        "patient_id": 5,
+        "status": "Completed",
+        "created_at": "2026-02-25 14:29:08.505896"
+      },
+      {
+        "id": 8,
+        "notes": null,
+        "patient_id": 8,
+        "status": "Partially Completed",
+        "created_at": "2026-02-27 10:33:45.527635"
+      },
+      {
+        "id": 28,
+        "notes": null,
+        "patient_id": 28,
+        "status": "Completed",
+        "created_at": "2026-03-04 13:12:34.770750"
+      },
+      {
+        "id": 7,
+        "notes": null,
+        "patient_id": 7,
+        "status": "Partially Completed",
+        "created_at": "2026-02-26 06:56:40.830473"
+      },
+      {
+        "id": 29,
+        "notes": null,
+        "patient_id": 29,
+        "status": "Partially Completed",
+        "created_at": "2026-03-04 13:28:55.671380"
+      },
+      {
+        "id": 34,
+        "notes": null,
+        "patient_id": 34,
+        "status": "Pending",
+        "created_at": "2026-03-05 12:30:20.313384"
+      },
+      {
+        "id": 35,
+        "notes": null,
+        "patient_id": 35,
+        "status": "Pending",
+        "created_at": "2026-03-05 12:34:24.163747"
+      },
+      {
+        "id": 3,
+        "notes": null,
+        "patient_id": 3,
+        "status": "Partially Completed",
+        "created_at": "2026-02-23 12:56:09.011552"
+      },
+      {
+        "id": 9,
+        "notes": null,
+        "patient_id": 9,
+        "status": "Partially Completed",
+        "created_at": "2026-02-27 11:15:39.191813"
+      },
+      {
+        "id": 32,
+        "notes": null,
+        "patient_id": 32,
+        "status": "Partially Completed",
+        "created_at": "2026-03-05 12:21:39.793209"
+      },
+      {
+        "id": 14,
+        "notes": null,
+        "patient_id": 14,
+        "status": "Completed",
+        "created_at": "2026-03-02 09:31:04.868125"
+      },
+      {
+        "id": 37,
+        "notes": null,
+        "patient_id": 37,
+        "status": "Completed",
+        "created_at": "2026-03-06 06:49:41.126914"
+      },
+      {
+        "id": 31,
+        "notes": null,
+        "patient_id": 31,
+        "status": "Partially Completed",
+        "created_at": "2026-03-05 07:06:28.495462"
+      },
+      {
+        "id": 6,
+        "notes": null,
+        "patient_id": 6,
+        "status": "Completed",
+        "created_at": "2026-02-25 14:30:30.378835"
+      },
+      {
+        "id": 10,
+        "notes": null,
+        "patient_id": 10,
+        "status": "Partially Completed",
+        "created_at": "2026-03-02 07:43:42.158062"
+      },
+      {
+        "id": 12,
+        "notes": null,
+        "patient_id": 12,
+        "status": "Partially Completed",
+        "created_at": "2026-03-02 09:24:15.206126"
+      },
+      {
+        "id": 15,
+        "notes": null,
+        "patient_id": 15,
+        "status": "Completed",
+        "created_at": "2026-03-02 10:36:19.977015"
+      },
+      {
+        "id": 38,
+        "notes": null,
+        "patient_id": 38,
+        "status": "Pending",
+        "created_at": "2026-03-06 08:29:55.921513"
+      },
+      {
+        "id": 39,
+        "notes": null,
+        "patient_id": 39,
+        "status": "Pending",
+        "created_at": "2026-03-06 10:20:51.380111"
+      },
+      {
+        "id": 18,
+        "notes": null,
+        "patient_id": 18,
+        "status": "Partially Completed",
+        "created_at": "2026-03-02 14:48:57.074313"
+      },
+      {
+        "id": 20,
+        "notes": null,
+        "patient_id": 20,
+        "status": "Partially Completed",
+        "created_at": "2026-03-03 07:58:08.964946"
+      },
+      {
+        "id": 19,
+        "notes": null,
+        "patient_id": 19,
+        "status": "Completed",
+        "created_at": "2026-03-03 07:22:32.492738"
+      },
+      {
+        "id": 24,
+        "notes": null,
+        "patient_id": 24,
+        "status": "Pending",
+        "created_at": "2026-03-04 08:34:25.749085"
+      },
+      {
+        "id": 13,
+        "notes": null,
+        "patient_id": 13,
+        "status": "Completed",
+        "created_at": "2026-03-02 09:28:32.579268"
+      },
+      {
+        "id": 16,
+        "notes": null,
+        "patient_id": 16,
+        "status": "Partially Completed",
+        "created_at": "2026-03-02 11:30:42.879863"
+      },
+      {
+        "id": 17,
+        "notes": null,
+        "patient_id": 17,
+        "status": "Partially Completed",
+        "created_at": "2026-03-02 12:58:10.627099"
+      },
+      {
+        "id": 33,
+        "notes": null,
+        "patient_id": 33,
+        "status": "Completed",
+        "created_at": "2026-03-05 12:25:39.585592"
+      },
+      {
+        "id": 21,
+        "notes": null,
+        "patient_id": 21,
+        "status": "Partially Completed",
+        "created_at": "2026-03-03 13:33:34.419436"
+      },
+      {
+        "id": 26,
+        "notes": null,
+        "patient_id": 26,
+        "status": "Pending",
+        "created_at": "2026-03-04 13:09:59.810361"
+      },
+      {
+        "id": 27,
+        "notes": null,
+        "patient_id": 27,
+        "status": "Pending",
+        "created_at": "2026-03-04 13:12:03.186577"
+      },
+      {
+        "id": 36,
+        "notes": null,
+        "patient_id": 36,
+        "status": "Completed",
+        "created_at": "2026-03-05 13:11:46.769496"
+      },
+      {
+        "id": 30,
+        "notes": null,
+        "patient_id": 30,
+        "status": "Partially Completed",
+        "created_at": "2026-03-05 06:43:13.513433"
+      },
+      {
+        "id": 23,
+        "notes": null,
+        "patient_id": 23,
+        "status": "Completed",
+        "created_at": "2026-03-04 08:30:50.566951"
+      },
+      {
+        "id": 11,
+        "notes": null,
+        "patient_id": 11,
+        "status": "Partially Completed",
+        "created_at": "2026-03-02 08:03:28.287605"
+      },
+      {
+        "id": 40,
+        "notes": null,
+        "patient_id": 40,
+        "status": "Partially Completed",
+        "created_at": "2026-03-06 10:31:12.008577"
+      },
+      {
+        "id": 22,
+        "notes": null,
+        "patient_id": 22,
+        "status": "Partially Completed",
+        "created_at": "2026-03-04 07:08:06.170986"
+      }
+    ],
+    "lab_results": [
+      {
+        "lab_request_id": 1,
+        "id": 808,
+        "test_name": "RF",
+        "results": "4",
+        "ref_range": "0 - 14",
+        "comment": "HIGH: associated with rheumatoid arthritis and other autoimmune conditions. LOW: typical.",
+        "patient_id": 1,
+        "lab_test_id": 25,
+        "unit": "IU/mL",
+        "flag": "",
+        "created_at": "2026-03-06 14:31:32.359319"
+      }
+    ],
+    "payment_codes": [],
+    "system_settings": [],
+    "audit_logs": []
+  }
+}
