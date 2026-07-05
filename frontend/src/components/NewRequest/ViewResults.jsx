@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { Box, Typography, Divider, Stack } from "@mui/material";
+import { QRCodeSVG } from "qrcode.react";
 
 const ViewResults = ({
   selectedTests = [],
@@ -88,6 +89,25 @@ const ViewResults = ({
   }, {});
 
   const requestedTestCategories = Object.keys(groupedTests).join(", ");
+
+  const qrPayload = {
+    requestId: requestId || "N/A",
+    patient: {
+      firstName: patient.firstName || "",
+      lastName: patient.lastName || "",
+      dob: patient.dob || "",
+      gender: patient.gender || "",
+    },
+    sampleDate: sampleDate || "N/A",
+    results: uniqueTests.map((test) => ({
+      name: test.name,
+      result: test.result || "",
+      unit: test.unit || "",
+      flag: test.flag || "",
+    })),
+  };
+
+  const qrValue = JSON.stringify(qrPayload);
 
   const getMicroSectionHeading = (subTab) => {
     if (subTab === "culture") return "Culture Results";
@@ -327,18 +347,7 @@ const ViewResults = ({
   }
 
   return (
-    <Box
-      ref={componentRef}
-      sx={{
-        position: "absolute",
-        left: 0,
-        top: 0,
-        width: "100%",
-        pointerEvents: "none",
-        zIndex: -1,
-        opacity: 0,
-      }}
-    >
+    <Box ref={componentRef} sx={{ position: "relative", width: "100%" }}>
       {Object.entries(groupedTests).map(([category, tests]) => (
         <div key={category} style={{ position: "relative", marginBottom: "50px" }}>
           {/* HEADER */}
@@ -348,8 +357,8 @@ const ViewResults = ({
               alt="Biotech Logo"
             />
             <div className="contact">
-              <div>30 Golden Stairs, Mt Pleasant, Harare</div>
-              <div>217 Herbert Chitepo Ave, Harare</div>
+              <div>217 Herbert Chitepo Ave</div>
+              <div>Harare,Zimbabwe</div>
               <div>Tel: 0785 665 046;0716 402 536/8</div>
               <div>diagnostics@biotechinst.com</div>
               <div>www.biotechinst.com</div>
@@ -387,14 +396,15 @@ const ViewResults = ({
       
     </div>
     <div className="patient-qr">
-      <img
-        src="/qr-code.jpeg"
-        alt="Patient QR Code"
-        width="140"
-        height="140"
-
+      <QRCodeSVG
+        value={qrValue}
+        size={140}
+        bgColor="#ffffff"
+        fgColor="#000000"
+        level="M"
+        includeMargin={true}
       />
-      <div className="qr-caption">Scan to validate</div>
+      <div className="qr-caption">Scan to view patient results</div>
     </div>
 
     
@@ -486,6 +496,21 @@ const ViewResults = ({
                 {authorisedBy} ({new Date().toLocaleDateString()})
               </span>
             </div>
+
+
+            <div
+  style={{
+    marginTop: "40px",
+    borderTop: "1px solid #ccc",
+    paddingTop: "20px",
+  }}
+>
+  <p>
+    <strong>Reviewed By:</strong> ______________________
+  </p>
+
+ 
+</div>
           </div>
 
           <div style={{ pageBreakAfter: "always" }} />
