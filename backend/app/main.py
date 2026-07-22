@@ -62,7 +62,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI(title="Biozone Lab API")
 
-# CORS - Allow frontend from any origin during development
+# CORS - include local defaults and optional deployed frontend origins.
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -71,6 +71,11 @@ origins = [
     "https://127.0.0.1:5173",
     "https://192.168.1.114:5173",
 ]
+
+frontend_origins_env = os.getenv("FRONTEND_ORIGINS", "")
+if frontend_origins_env.strip():
+    deployed_origins = [origin.strip().rstrip("/") for origin in frontend_origins_env.split(",") if origin.strip()]
+    origins = list(dict.fromkeys(origins + deployed_origins))
 
 app.add_middleware(
     CORSMiddleware,
@@ -199,7 +204,7 @@ async def init_lab_tests(db: AsyncSession):
     ],
 
     "Hematology": [
-         "PDW", "Reticulocyte Count", "ESR", "INR", "D-Dimer", "Fasting Blood Sugar",
+         "PDW", "Blood Group","Reticulocyte Count", "ESR", "INR", "D-Dimer", "Fasting Blood Sugar",
          "Folic Acid", "Lactic acid", "Serum Amylase", "Serum Iron Levels", "Retic Count",
          
     ],

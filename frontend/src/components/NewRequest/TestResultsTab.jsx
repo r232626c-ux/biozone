@@ -420,6 +420,12 @@ const lab_reference = {
       //comment: "Platelet distribution width — high suggests variability in platelet size.",
       calculation: "Analyzer"
     },
+     "Blood Group": {
+      unit: " ",
+      reference: { male: [], female: [] },
+      //comment: "Elevated: nonspecific inflammation. Trends useful.",
+      calculation: "Westergren method"
+    },
     "Reticulocyte Count": {
       unit: "%",
       reference: { adult: [0.5, 2.5] },

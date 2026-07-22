@@ -2,6 +2,11 @@
 // Determines the API URL based on environment
 
 const getApiUrl = () => {
+  const envApiUrl = import.meta.env.VITE_API_URL;
+  if (envApiUrl && typeof envApiUrl === "string") {
+    return envApiUrl.replace(/\/$/, "");
+  }
+
   // In development, use the current host with port 8000 for backend
   if (import.meta.env.DEV) {
     const host = window.location.hostname;

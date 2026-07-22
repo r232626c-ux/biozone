@@ -28,40 +28,78 @@ import AuditLogs from "./pages/AuditLogs";
 const ViewResultsWrapper = () => {
   const { id } = useParams();
   const [request, setRequest] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/lab-requests/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setRequest(res.data))
-      .catch((err) => console.error(err));
+    let active = true;
+
+    const fetchRequest = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const res = await axios.get(`${API_URL}/lab-requests/${id}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!active) return;
+        setRequest(res.data ?? null);
+      } catch (err) {
+        if (!active) return;
+        console.error("Failed to load lab request", err);
+        setError("Could not load lab request results. Please refresh and try again.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchRequest();
+
+    return () => {
+      active = false;
+    };
   }, [id, token]);
 
-  if (!request) return <Typography sx={{ p: 4 }}>Loading...</Typography>;
+  if (loading) return <Typography sx={{ p: 4 }}>Loading...</Typography>;
+  if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
+  if (!request) return <Typography color="error" sx={{ p: 4 }}>No request data found.</Typography>;
+
+  const rawResults =
+    (Array.isArray(request.lab_results) && request.lab_results) ||
+    (Array.isArray(request.labresult_set) && request.labresult_set) ||
+    (Array.isArray(request.results) && request.results) ||
+    (Array.isArray(request.test_results) && request.test_results) ||
+    [];
+
+  const mappedTests = rawResults.map((lr) => ({
+    id: lr.id ?? lr.lab_test_id ?? lr.test_name ?? `${lr.test_name}-${Math.random()}`,
+    name: lr.lab_test?.name || lr.test_name || lr.name || "Unknown Test",
+    category: lr.lab_test?.category || lr.category || "Other",
+    result: lr.results ?? lr.test_result ?? lr.result ?? "",
+    unit: lr.unit ?? lr.test_unit ?? "",
+    refRange: lr.ref_range ?? lr.refrange ?? lr.refRange ?? "",
+    flag: lr.flag ?? "",
+    comment: lr.comment ?? "",
+    incubation: lr.incubation ?? "",
+    subTab: lr.subTab ?? "",
+  }));
+
+  const patient = request.patient ?? {};
 
   return (
     <ViewResults
-      selectedTests={request.lab_results.map((lr) => ({
-        id: lr.id,
-        name: lr.lab_test?.name || lr.test_name,
-        category: lr.lab_test?.category,
-        result: lr.results,
-        unit: lr.unit ?? "",
-refRange: lr.ref_range ?? lr.refrange ?? "",
-flag: lr.flag ?? "",
-comment: lr.comment ?? "",
-      }))}
+      selectedTests={mappedTests}
       patient={{
-        firstName: request.patient.first_name,
-        lastName: request.patient.last_name,
-        dob: request.patient.dob,
-        gender: request.patient.gender,
-        facility: request.patient.facility,
-        funding: request.patient.funding,
-        clinicalData: request.patient.clinical_data,
-        doctorName: request.patient.doctor_name,
+        firstName: patient.first_name,
+        lastName: patient.last_name,
+        dob: patient.dob,
+        gender: patient.gender,
+        facility: patient.facility,
+        funding: patient.funding,
+        clinicalData: patient.clinical_data,
+        doctorName: patient.doctor_name,
       }}
       requestId={request.id}
       sampleDate={request.sample_date}
