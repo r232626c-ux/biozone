@@ -99,12 +99,7 @@ const ViewResults = ({
       gender: patient.gender || "",
     },
     sampleDate: sampleDate || "N/A",
-    results: uniqueTests.map((test) => ({
-      name: test.name,
-      result: test.result || "",
-      unit: test.unit || "",
-      flag: test.flag || "",
-    })),
+    
   };
 
   const qrValue = JSON.stringify(qrPayload);

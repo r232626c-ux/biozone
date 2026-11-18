@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, RootModel
+from pydantic import BaseModel, EmailStr, Field, RootModel
 from typing import List, Optional, Dict
 from datetime import datetime
 
@@ -15,6 +15,11 @@ class UserCreate(UserBase):
     role: Optional[str] = None
 
 
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class AdminCreateUser(BaseModel):
     username: str
     email: EmailStr
@@ -27,6 +32,7 @@ class UserOut(UserBase):
     email: EmailStr
     role: str
     is_active: bool
+    must_change_password: bool = False
 
     class Config:
         from_attributes = True
@@ -53,17 +59,27 @@ class AuditLogOut(BaseModel):
         from_attributes = True
 
 
+class EmailSentAuditEvent(BaseModel):
+    recipients: List[EmailStr]
+
+
 # ================= PATIENT =================
 class PatientBase(BaseModel):
     first_name: str
     last_name: str
     dob: Optional[datetime] = None
     gender: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
     facility: Optional[str] = None
     funding: Optional[str] = None
     member_number: Optional[str] = None
     member_suffix: Optional[str] = None
+    relationship: Optional[str] = None
+    principal: Optional[bool] = True
     doctor_name: Optional[str] = None
+    ah_foz: Optional[str] = None
     clinical_data: Optional[str] = None
     request_id: Optional[int] = None
     sample_date: Optional[str] = None
@@ -83,6 +99,19 @@ class PatientOut(PatientBase):
 
     class Config:
         from_attributes = True
+
+
+class PatientVisitOut(BaseModel):
+    id: int
+    status: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PatientSearchOut(PatientOut):
+    lab_requests: List[PatientVisitOut] = Field(default_factory=list)
 
 
 # ================= LAB TEST =================
@@ -123,10 +152,11 @@ class LabResultOut(BaseModel):
 
 
 class LabRequestOut(LabRequestBase):
+    patient_id: Optional[int] = None
     id: int
     created_at: datetime
     sample_date: Optional[datetime] = None
-    patient: PatientOut
+    patient: Optional[PatientOut] = None
 
     class Config:
         from_attributes = True
@@ -179,6 +209,14 @@ class LabResultRead(BaseModel):
         from_attributes = True
 
 
+class LabResultListOut(LabResultRead):
+    category: Optional[str] = None
+    patient_first_name: Optional[str] = None
+    patient_last_name: Optional[str] = None
+    request_created_at: Optional[datetime] = None
+    request_status: Optional[str] = None
+
+
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
@@ -203,12 +241,16 @@ class AdminVerifyResponse(BaseModel):
 
 # ================= SYSTEM SETTINGS =================
 class SystemSettingsBase(BaseModel):
-    labName: Optional[str] = "BIOZONE Lab"
-    turnaroundTime: Optional[str] = "24"
-    enableNotifications: Optional[bool] = True
-    maintenanceMode: Optional[bool] = False
-    defaultReportFormat: Optional[str] = "PDF"
-    dataRetentionDays: Optional[int] = 365
+    labname: Optional[str] = Field(default="BIOZONE Lab", alias="labName")
+    turnaroundtime: Optional[str] = Field(default="24", alias="turnaroundTime")
+    enablenotifications: Optional[bool] = Field(default=True, alias="enableNotifications")
+    maintenancemode: Optional[bool] = Field(default=False, alias="maintenanceMode")
+    defaultreportformat: Optional[str] = Field(default="PDF", alias="defaultReportFormat")
+    dataretentiondays: Optional[int] = Field(default=365, alias="dataRetentionDays")
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 
 class SystemSettingsCreate(SystemSettingsBase):
@@ -217,13 +259,14 @@ class SystemSettingsCreate(SystemSettingsBase):
 
 class SystemSettingsOut(SystemSettingsBase):
     id: int
-    lastPaymentDate: Optional[datetime] = None
-    paymentStatus: str
+    lastpaymentdate: Optional[datetime] = Field(default=None, alias="lastPaymentDate")
+    paymentstatus: str = Field(default="inactive", alias="paymentStatus")
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class PaymentVerificationRequest(BaseModel):

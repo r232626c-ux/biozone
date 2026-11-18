@@ -1,46 +1,57 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Typography,
-  Box,
-  TextField,
-  FormControlLabel,
-  Checkbox,
-  Button,
-  CircularProgress,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Alert,
+  Box,
+  Button,
   Card,
   CardContent,
+  Checkbox,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
 import axios from "axios";
 
 import { API_URL } from "../../utils/api";
 
-const SystemSettings = () => {
-  const [settings, setSettings] = useState({
-    labname: "",
-    turnaroundtime: "",
-    enablenotifications: false,
-    maintenancemode: false,
-    defaultteportformat: "PDF",
-    dataretentiondays: 365,
-    lastpaymentdate: null,
-    paymentstatus: "active",
-  });
+const defaultSettings = {
+  labName: "",
+  turnaroundTime: "24",
+  enableNotifications: true,
+  maintenanceMode: false,
+  defaultReportFormat: "PDF",
+  dataRetentionDays: 365,
+  lastPaymentDate: null,
+  paymentStatus: "inactive",
+};
 
-  const [loading, setLoading] = useState(false);
+const getErrorMessage = (error, fallback) => {
+  const detail = error.response?.data?.detail;
+  return typeof detail === "string" ? detail : error.message || fallback;
+};
+
+const SystemSettings = () => {
+  const [settings, setSettings] = useState(defaultSettings);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
   const [paymentCode, setPaymentCode] = useState("");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [systemLocked, setSystemLocked] = useState(false);
   const [daysUntilPayment, setDaysUntilPayment] = useState(0);
 
-  // Check if system needs payment
   const checkPaymentStatus = (lastPayment) => {
     if (!lastPayment) {
       setSystemLocked(true);
@@ -49,295 +60,404 @@ const SystemSettings = () => {
     }
 
     const lastPaymentDate = new Date(lastPayment);
-    const today = new Date();
+    if (Number.isNaN(lastPaymentDate.getTime())) {
+      setSystemLocked(true);
+      setDaysUntilPayment(0);
+      return;
+    }
+
     const daysElapsed = Math.floor(
-      (today - lastPaymentDate) / (1000 * 60 * 60 * 24)
+      (Date.now() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24)
     );
-    const daysRemaining = 60 - daysElapsed; // 2 months = 60 days
+    const daysRemaining = 60 - daysElapsed;
 
     if (daysRemaining <= 0) {
       setSystemLocked(true);
       setPaymentDialogOpen(true);
       setDaysUntilPayment(0);
-    } else if (daysRemaining <= 7) {
-      // Warning if less than 7 days left
-      setDaysUntilPayment(daysRemaining);
-    } else {
-      setDaysUntilPayment(daysRemaining);
-      setSystemLocked(false);
+      return;
     }
+
+    setDaysUntilPayment(daysRemaining);
+    setSystemLocked(false);
   };
 
-  // Fetch system settings from backend on component mount
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_URL}/system-settings/`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        setSettings((prev) => ({ ...prev, ...response.data }));
-        checkPaymentStatus(response.data.lastPaymentDate);
-      } catch (error) {
-        console.error("Failed to load system settings:", error);
-        setMessage("Failed to load settings. Try refreshing.");
-      } finally {
-        setLoading(false);
+  const fetchSettings = useCallback(async () => {
+    setLoading(true);
+    setLoaded(false);
+    setLoadError("");
+    try {
+      const response = await axios.get(`${API_URL}/system-settings/`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (!response.data || typeof response.data !== "object") {
+        throw new Error("The server returned invalid system settings.");
       }
-    };
 
-    fetchSettings();
+      setSettings({ ...defaultSettings, ...response.data });
+      setLoaded(true);
+      checkPaymentStatus(response.data.lastPaymentDate);
+    } catch (error) {
+      console.error("Failed to load system settings", error);
+      setLoadError(getErrorMessage(error, "Failed to load settings."));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Handle input changes dynamically
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setSettings((prev) => ({
-      ...prev,
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setSettings((current) => ({
+      ...current,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  // Verify payment code and unlock system
   const handlePaymentVerification = async () => {
     if (!paymentCode.trim()) {
-      setMessage("Please enter the payment verification code");
+      setMessage("Enter the payment verification code.");
+      setMessageType("error");
       return;
     }
 
+    setVerifyingPayment(true);
+    setMessage("");
     try {
       const response = await axios.post(
         `${API_URL}/system-settings/verify-payment/`,
-        { code: paymentCode },
+        { code: paymentCode.trim() },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
 
-      if (response.data.success) {
-        setMessage("Payment verified! System unlocked successfully.");
-        setSettings((prev) => ({
-          ...prev,
-          lastPaymentDate: new Date().toISOString(),
-          paymentStatus: "active",
-        }));
-        setPaymentCode("");
-        setPaymentDialogOpen(false);
-        setSystemLocked(false);
-        checkPaymentStatus(new Date().toISOString());
-      } else {
-        setMessage("Invalid payment code. Please try again.");
+      if (!response.data.success) {
+        setMessage(response.data.message || "Invalid payment code. Please try again.");
+        setMessageType("error");
+        return;
       }
+
+      const paymentDate = response.data.lastPaymentDate || new Date().toISOString();
+      setSettings((current) => ({
+        ...current,
+        lastPaymentDate: paymentDate,
+        paymentStatus: "active",
+      }));
+      setMessage(response.data.message || "Payment verified. System unlocked.");
+      setMessageType("success");
+      setPaymentCode("");
+      setPaymentDialogOpen(false);
+      checkPaymentStatus(paymentDate);
     } catch (error) {
-      console.error("Payment verification failed:", error);
-      setMessage("Payment verification failed. Please try again.");
+      console.error("Payment verification failed", error);
+      setMessage(getErrorMessage(error, "Payment verification failed."));
+      setMessageType("error");
+    } finally {
+      setVerifyingPayment(false);
     }
   };
 
-  // Save updated settings to backend
   const handleSave = async () => {
-    if (systemLocked) {
-      setMessage("System is locked. Please verify payment before saving.");
+    if (!loaded || systemLocked) return;
+
+    if (!settings.labName.trim()) {
+      setMessage("Enter a laboratory name.");
+      setMessageType("error");
+      return;
+    }
+
+    const retentionDays = Number(settings.dataRetentionDays);
+    if (!Number.isInteger(retentionDays) || retentionDays < 0) {
+      setMessage("Data retention must be a whole number of days (0 or more).");
+      setMessageType("error");
       return;
     }
 
     setSaving(true);
+    setMessage("");
     try {
       await axios.put(
         `${API_URL}/system-settings/`,
-        settings,
+        {
+          labName: settings.labName.trim(),
+          turnaroundTime: String(settings.turnaroundTime),
+          enableNotifications: Boolean(settings.enableNotifications),
+          maintenanceMode: Boolean(settings.maintenanceMode),
+          defaultReportFormat: settings.defaultReportFormat,
+          dataRetentionDays: retentionDays,
+        },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
-      setMessage("Settings updated successfully!");
+      setMessage("System settings saved successfully.");
+      setMessageType("success");
     } catch (error) {
-      console.error("Failed to update settings:", error);
-      setMessage("Failed to save settings. Try again.");
+      console.error("Failed to update system settings", error);
+      setMessage(getErrorMessage(error, "Failed to save settings."));
+      setMessageType("error");
     } finally {
       setSaving(false);
-      setTimeout(() => setMessage(""), 3000);
     }
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 700, mx: "auto" }}>
-      <Typography variant="h5" gutterBottom>
-        System Settings
-      </Typography>
+    <Box sx={{ maxWidth: 960 }}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "stretch", sm: "center" }}
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ mb: 2.5 }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            System settings
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Configure laboratory defaults and system behavior.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={!loaded || saving || systemLocked}
+          sx={{
+            alignSelf: { xs: "flex-start", sm: "center" },
+            bgcolor: "#0f8a3a",
+            "&:hover": { bgcolor: "#0b6f2e" },
+            textTransform: "none",
+            fontWeight: 600,
+          }}
+        >
+          {saving ? "Saving…" : systemLocked ? "System locked" : "Save settings"}
+        </Button>
+      </Stack>
 
-      {/* System Status & Payment Section */}
-      <Card sx={{ mb: 3, backgroundColor: systemLocked ? "#ffebee" : "#e8f5e9" }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            System Status & Payment
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            <strong>Status:</strong> {systemLocked ? "🔒 LOCKED" : "🔓 ACTIVE"}
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            <strong>Last Payment Date:</strong>{" "}
-            {settings.lastPaymentDate
-              ? new Date(settings.lastPaymentDate).toLocaleDateString()
-              : "Never"}
-          </Typography>
-          {daysUntilPayment > 0 && !systemLocked && (
-            <Typography variant="body2" color="warning" sx={{ mb: 2 }}>
-              ⚠️ Payment due in {daysUntilPayment} days
-            </Typography>
-          )}
-          {systemLocked && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              System is locked. Please verify payment to continue.
-            </Alert>
-          )}
-          {systemLocked && (
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => setPaymentDialogOpen(true)}
-            >
-              Verify Payment
+      {loadError && (
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={fetchSettings}>
+              Retry
             </Button>
+          }
+          sx={{ mb: 2 }}
+        >
+          {loadError}
+        </Alert>
+      )}
+
+      {message && (
+        <Alert
+          severity={messageType}
+          onClose={() => setMessage("")}
+          sx={{ mb: 2 }}
+        >
+          {message}
+        </Alert>
+      )}
+
+      <Card
+        variant="outlined"
+        sx={{
+          mb: 2.5,
+          borderColor: systemLocked ? "#f1b8b8" : "#cfe5d4",
+          bgcolor: systemLocked ? "#fff8f8" : "#f7fbf7",
+          borderRadius: 2,
+        }}
+      >
+        <CardContent>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            spacing={2}
+          >
+            <Box>
+              <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                Subscription status
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Status: {systemLocked ? "Locked" : "Active"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Last payment:{" "}
+                {settings.lastPaymentDate
+                  ? new Date(settings.lastPaymentDate).toLocaleDateString()
+                  : "No payment recorded"}
+              </Typography>
+              {daysUntilPayment > 0 && daysUntilPayment <= 7 && (
+                <Typography variant="body2" sx={{ mt: 0.5, color: "#a8510a" }}>
+                  Payment due in {daysUntilPayment} days.
+                </Typography>
+              )}
+            </Box>
+            <Button
+              variant={systemLocked ? "contained" : "outlined"}
+              color={systemLocked ? "error" : "inherit"}
+              onClick={() => setPaymentDialogOpen(true)}
+              sx={{ alignSelf: { xs: "flex-start", sm: "center" }, textTransform: "none" }}
+            >
+              Verify payment
+            </Button>
+          </Stack>
+          {systemLocked && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              System settings are read-only until payment is verified.
+            </Alert>
           )}
         </CardContent>
       </Card>
 
-      {/* Lab Configuration */}
-      <TextField
-        label="Lab Name"
-        name="labName"
-        value={settings.labname}
-        onChange={handleChange}
-        fullWidth
-        sx={{ mb: 2 }}
-        disabled={systemLocked}
-      />
+      <Card variant="outlined" sx={{ borderColor: "#dde6de", borderRadius: 2 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+            Laboratory defaults
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+            These values are used as the system-wide defaults.
+          </Typography>
 
-      <TextField
-        label="Default Turnaround Time (hrs)"
-        name="turnaroundTime"
-        type="number"
-        value={settings.turnaroundtime}
-        onChange={handleChange}
-        fullWidth
-        sx={{ mb: 2 }}
-        disabled={systemLocked}
-      />
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+              gap: 2,
+            }}
+          >
+            <TextField
+              label="Laboratory name"
+              name="labName"
+              value={settings.labName}
+              onChange={handleChange}
+              required
+              fullWidth
+              disabled={!loaded || systemLocked}
+            />
+            <TextField
+              label="Default turnaround time (hours)"
+              name="turnaroundTime"
+              type="number"
+              value={settings.turnaroundTime}
+              onChange={handleChange}
+              inputProps={{ min: 1 }}
+              fullWidth
+              disabled={!loaded || systemLocked}
+            />
+            <TextField
+              label="Data retention (days)"
+              name="dataRetentionDays"
+              type="number"
+              value={settings.dataRetentionDays}
+              onChange={handleChange}
+              inputProps={{ min: 0, step: 1 }}
+              fullWidth
+              disabled={!loaded || systemLocked}
+            />
+            <TextField
+              select
+              label="Default report format"
+              name="defaultReportFormat"
+              value={settings.defaultReportFormat}
+              onChange={handleChange}
+              fullWidth
+              disabled={!loaded || systemLocked}
+            >
+              {["PDF", "DOCX", "XLSX"].map((format) => (
+                <MenuItem key={format} value={format}>
+                  {format}
+                </MenuItem>
+              ))}
+              {!["PDF", "DOCX", "XLSX"].includes(settings.defaultReportFormat) && (
+                <MenuItem value={settings.defaultReportFormat}>
+                  {settings.defaultReportFormat}
+                </MenuItem>
+              )}
+            </TextField>
+          </Box>
 
-      <FormControlLabel
-        control={
-          <Checkbox
-            name="enableNotifications"
-            checked={settings.enablenotifications}
-            onChange={handleChange}
-            disabled={systemLocked}
-          />
-        }
-        label="Enable Notifications"
-        sx={{ mb: 2 }}
-      />
+          <Divider sx={{ my: 2.5 }} />
 
-      <Divider sx={{ my: 3 }} />
+          <Stack spacing={0.5}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="enableNotifications"
+                  checked={Boolean(settings.enableNotifications)}
+                  onChange={handleChange}
+                  disabled={!loaded || systemLocked}
+                  sx={{ "&.Mui-checked": { color: "#0f8a3a" } }}
+                />
+              }
+              label="Enable system notifications"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="maintenanceMode"
+                  checked={Boolean(settings.maintenanceMode)}
+                  onChange={handleChange}
+                  disabled={!loaded || systemLocked}
+                  sx={{ "&.Mui-checked": { color: "#0f8a3a" } }}
+                />
+              }
+              label="Enable maintenance mode"
+            />
+          </Stack>
+        </CardContent>
+      </Card>
 
-      {/* Additional System Settings */}
-      <TextField
-        label="Data Retention (days)"
-        name="dataRetentionDays"
-        type="number"
-        value={settings.dataretentiondays}
-        onChange={handleChange}
-        fullWidth
-        sx={{ mb: 2 }}
-        disabled={systemLocked}
-      />
-
-      <TextField
-        label="Default Report Format"
-        name="defaultReportFormat"
-        value={settings.defaultreportformat}
-        onChange={handleChange}
-        fullWidth
-        sx={{ mb: 2 }}
-        disabled={systemLocked}
-      />
-
-      <FormControlLabel
-        control={
-          <Checkbox
-            name="maintenanceMode"
-            checked={settings.maintenancemode}
-            onChange={handleChange}
-            disabled={systemLocked}
-          />
-        }
-        label="Enable Maintenance Mode"
-        sx={{ mb: 2 }}
-      />
-
-      {message && (
-        <Typography
-          variant="body2"
-          color={message.includes("failed") || message.includes("Invalid") ? "error" : "success"}
-          sx={{ mb: 2 }}
-        >
-          {message}
-        </Typography>
-      )}
-
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleSave}
-        disabled={saving || systemLocked}
-      >
-        {saving ? "Saving..." : systemLocked ? "System Locked" : "Save Settings"}
-      </Button>
-
-      {/* Payment Verification Dialog */}
       <Dialog
         open={paymentDialogOpen}
         onClose={() => {
-          if (!systemLocked) setPaymentDialogOpen(false);
+          if (!systemLocked && !verifyingPayment) setPaymentDialogOpen(false);
         }}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Verify Payment</DialogTitle>
+        <DialogTitle>Verify payment</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Your subscription requires payment. Please enter the payment verification code
-            to unlock the system.
+            Enter the payment verification code provided by your system administrator.
           </Alert>
           <TextField
-            label="Payment Verification Code"
-            type="password"
+            label="Payment verification code"
             value={paymentCode}
-            onChange={(e) => setPaymentCode(e.target.value)}
-            fullWidth
-            placeholder="Enter the code provided by the system administrator"
-            onKeyPress={(e) => {
-              if (e.key === "Enter") handlePaymentVerification();
+            onChange={(event) => setPaymentCode(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") handlePaymentVerification();
             }}
+            fullWidth
+            autoComplete="off"
+            disabled={verifyingPayment}
           />
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, py: 2 }}>
           <Button
             onClick={() => setPaymentDialogOpen(false)}
-            disabled={systemLocked}
+            disabled={systemLocked || verifyingPayment}
           >
             Cancel
           </Button>
           <Button
             onClick={handlePaymentVerification}
             variant="contained"
-            color="primary"
+            disabled={verifyingPayment}
+            sx={{
+              bgcolor: "#0f8a3a",
+              "&:hover": { bgcolor: "#0b6f2e" },
+              textTransform: "none",
+            }}
           >
-            Verify
+            {verifyingPayment ? "Verifying…" : "Verify"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,120 +1,162 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
-  Paper,
-  Typography,
-  Grid,
-  Checkbox,
-  FormControlLabel,
-  Divider,
+  Alert,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
-  Alert,
+  Paper,
   Snackbar,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from "@mui/material";
-
 import { API_URL } from "../../utils/api";
 
-// All possible permissions
-const allPermissions = [
-  "Manage users and roles",
-  "Configure system settings",
-  "Access audit logs",
-  "Add lab tests",
-  "Delete lab tests",
-  "Access patient lab results",
-  "Manage lab requests",
-  "Enter results accurately",
-  "Mark requests as completed",
-  "Register new patients",
-  "Initiate lab requests",
-  "Access patient history",
+const permissionGroups = [
+  {
+    label: "Administration",
+    permissions: [
+      "Manage users and roles",
+      "Configure system settings",
+    ],
+  },
+  {
+    label: "Laboratory tests",
+    permissions: ["Add lab tests", "Delete lab tests"],
+  },
+  {
+    label: "Requests and results",
+    permissions: [
+      "Access patient lab results",
+      "Manage lab requests",
+      "Enter results accurately",
+      "Mark requests as completed",
+    ],
+  },
+  {
+    label: "Patients",
+    permissions: [
+      "Register new patients",
+      "Initiate lab requests",
+      "Access patient history",
+    ],
+  },
 ];
 
-const roles = ["Admin", "Doctor", "Lab Technician", "User"];
+const defaultRoles = ["Admin", "Doctor", "Lab Technician", "User"];
+const canonicalRoleName = (role) =>
+  String(role)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(" ");
 
 const RolePermissions = () => {
+  const [availableRoles, setAvailableRoles] = useState(defaultRoles);
   const [selectedPermissions, setSelectedPermissions] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const token = localStorage.getItem("token");
 
-  // Load permissions from backend on component mount
-  useEffect(() => {
-    fetchPermissions();
-  }, []);
-
-  const fetchPermissions = async () => {
+  const fetchPermissions = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    setLoaded(false);
     try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${API_URL}/admin/permissions/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      
-      // Convert API response to local state format
-      const permsMap = {};
-      if (response.data.permissions) {
-        Object.entries(response.data.permissions).forEach(([role, perms]) => {
-          permsMap[role] = perms || [];
-        });
-      }
-      
-      setSelectedPermissions(permsMap);
-    } catch (error) {
-      console.error("Failed to load permissions:", error);
-      setMessage("Failed to load permissions from server");
-      setMessageType("error");
-      setSnackbarOpen(true);
-      // Initialize with empty permissions on error
-      const emptyPerms = {};
-      roles.forEach((role) => {
-        emptyPerms[role] = [];
+      const response = await axios.get(`${API_URL}/admin/permissions/`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setSelectedPermissions(emptyPerms);
+      const permissions = response.data?.permissions;
+      if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) {
+        throw new Error("The server returned an invalid permissions list.");
+      }
+
+      const roleNames = [
+        ...new Set([
+          ...defaultRoles,
+          ...Object.keys(permissions).map(canonicalRoleName),
+        ]),
+      ];
+      const permissionMap = Object.fromEntries(
+        roleNames.map((role) => {
+          const assignedPermissions = Object.entries(permissions)
+            .filter(([savedRole]) => canonicalRoleName(savedRole) === role)
+            .flatMap(([, assigned]) =>
+              Array.isArray(assigned) ? assigned : []
+            );
+          return [role, [...new Set(assignedPermissions)]];
+        })
+      );
+      setAvailableRoles(roleNames);
+      setSelectedPermissions(permissionMap);
+      setLoaded(true);
+    } catch (error) {
+      console.error("Failed to load role permissions", error);
+      setLoadError(
+        error.response?.data?.detail ||
+          error.message ||
+          "Could not load role permissions. Please try again."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchPermissions();
+  }, [fetchPermissions]);
+
+  const permissionCountByRole = useMemo(
+    () =>
+      Object.fromEntries(
+        availableRoles.map((role) => [
+          role,
+          (selectedPermissions[role] || []).length,
+        ])
+      ),
+    [availableRoles, selectedPermissions]
+  );
 
   const handleToggle = (role, permission) => {
-    setSelectedPermissions((prev) => {
-      const rolePerms = prev[role] || [];
-      if (rolePerms.includes(permission)) {
-        return { ...prev, [role]: rolePerms.filter((p) => p !== permission) };
-      } else {
-        return { ...prev, [role]: [...rolePerms, permission] };
-      }
+    setSelectedPermissions((current) => {
+      const rolePermissions = current[role] || [];
+      const updatedPermissions = rolePermissions.includes(permission)
+        ? rolePermissions.filter((item) => item !== permission)
+        : [...rolePermissions, permission];
+      return { ...current, [role]: updatedPermissions };
     });
   };
 
   const handleSave = async () => {
+    if (!loaded || loadError) return;
+    setSaving(true);
     try {
-      setSaving(true);
-      const token = localStorage.getItem("token");
-      
       await axios.put(
         `${API_URL}/admin/permissions/`,
         { permissions: selectedPermissions },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      setMessage("Permissions saved successfully!");
+      setMessage("Role permissions saved successfully.");
       setMessageType("success");
       setSnackbarOpen(true);
     } catch (error) {
-      console.error("Failed to save permissions:", error);
+      console.error("Failed to save role permissions", error);
       setMessage(
-        error.response?.data?.detail || 
-        "Failed to save permissions. Please try again."
+        error.response?.data?.detail ||
+          "Could not save role permissions. Please try again."
       );
       setMessageType("error");
       setSnackbarOpen(true);
@@ -123,77 +165,197 @@ const RolePermissions = () => {
     }
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
-    <Paper sx={{ p: 3, borderRadius: 2, maxHeight: "80vh", overflowY: "auto" }}>
-      <Typography variant="h5" gutterBottom textAlign="center">
-        Role Selection & Permissions
-      </Typography>
-      <Divider sx={{ mb: 3 }} />
-
-      {roles.map((role) => (
-        <Box key={role} sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={{ mb: 1, color: "primary.main" }}>
-            {role}
+    <Box>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "stretch", sm: "center" }}
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ mb: 2.5 }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            Roles & permissions
           </Typography>
-          <Divider sx={{ mb: 2 }} />
-
-          <Grid container spacing={1}>
-            {allPermissions.map((perm) => (
-              <Grid item xs={12} sm={6} md={4} key={perm}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={
-                        selectedPermissions[role]
-                          ? selectedPermissions[role].includes(perm)
-                          : false
-                      }
-                      onChange={() => handleToggle(role, perm)}
-                      disabled={saving}
-                    />
-                  }
-                  label={perm}
-                />
-              </Grid>
-            ))}
-          </Grid>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Review and configure permission assignments for each role.
+          </Typography>
         </Box>
-      ))}
-
-      <Box textAlign="center" mt={3}>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           onClick={handleSave}
-          disabled={saving}
-          sx={{ minWidth: 150 }}
+          disabled={!loaded || Boolean(loadError) || loading || saving}
+          sx={{
+            alignSelf: { xs: "flex-start", sm: "center" },
+            bgcolor: "#0f8a3a",
+            "&:hover": { bgcolor: "#0b6f2e" },
+            textTransform: "none",
+            fontWeight: 600,
+          }}
         >
-          {saving ? "Saving..." : "Save Permissions"}
+          {saving ? "Saving…" : "Save permissions"}
         </Button>
-      </Box>
+      </Stack>
+
+      {loadError && (
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={fetchPermissions}>
+              Retry
+            </Button>
+          }
+          sx={{ mb: 2 }}
+        >
+          {loadError}
+        </Alert>
+      )}
+
+      <Paper
+        variant="outlined"
+        sx={{ borderColor: "#dde6de", borderRadius: 2, overflow: "hidden" }}
+      >
+        <Box sx={{ p: 2, borderBottom: "1px solid #dde6de" }}>
+          <Typography sx={{ fontWeight: 700 }}>Permission matrix</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            Select the permissions assigned to each role, then save your changes.
+          </Typography>
+        </Box>
+
+        {loading ? (
+          <Box sx={{ py: 7, display: "flex", justifyContent: "center" }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : !loadError ? (
+          <TableContainer>
+            <Table
+              aria-label="Role permissions matrix"
+              sx={{ minWidth: 680, "& .MuiTableCell-root": { borderColor: "#e5ebe6" } }}
+            >
+              <TableHead>
+                <TableRow sx={{ bgcolor: "#f6f9f6" }}>
+                  <TableCell
+                    sx={{
+                      minWidth: 260,
+                      color: "#4f6a55",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    What the role can do
+                  </TableCell>
+                  {availableRoles.map((role) => (
+                    <TableCell
+                      key={role}
+                      align="center"
+                      sx={{
+                        minWidth: 120,
+                        color: "#4f6a55",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      <Box>{role}</Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {permissionCountByRole[role]} enabled
+                      </Typography>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {permissionGroups.map((group) => (
+                  <React.Fragment key={group.label}>
+                    <TableRow>
+                      <TableCell
+                        colSpan={availableRoles.length + 1}
+                        sx={{
+                          py: 1,
+                          bgcolor: "#f6f9f6",
+                          color: "#0b6f2e",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {group.label}
+                      </TableCell>
+                    </TableRow>
+                    {group.permissions.map((permission) => (
+                      <TableRow
+                        key={permission}
+                        hover
+                        sx={{ "&:hover": { bgcolor: "#f6f9f6" } }}
+                      >
+                        <TableCell sx={{ fontWeight: 500 }}>{permission}</TableCell>
+                        {availableRoles.map((role) => (
+                          <TableCell key={role} align="center" sx={{ py: 0.5 }}>
+                            <Checkbox
+                              checked={(selectedPermissions[role] || []).includes(
+                                permission
+                              )}
+                              onChange={() => handleToggle(role, permission)}
+                              disabled={saving}
+                              inputProps={{
+                                "aria-label": `${permission} for ${role}`,
+                              }}
+                              sx={{
+                                color: "#9bb6a0",
+                                "&.Mui-checked": { color: "#0f8a3a" },
+                              }}
+                            />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Box sx={{ p: 3 }}>
+            <Typography color="text.secondary">
+              Permissions are unavailable until the server connection is restored.
+            </Typography>
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            px: 2,
+            py: 1.25,
+            borderTop: "1px solid #dde6de",
+            bgcolor: "#f6f9f6",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Role assignments are saved to the permissions record.
+          </Typography>
+        </Box>
+      </Paper>
 
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={5000}
-        onClose={handleCloseSnackbar}
+        onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={messageType}>
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={messageType}
+          sx={{ width: "100%" }}
+        >
           {message}
         </Alert>
       </Snackbar>
-    </Paper>
+    </Box>
   );
 };
 

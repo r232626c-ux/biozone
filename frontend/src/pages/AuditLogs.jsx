@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   Box,
   Container,
   Paper,
@@ -15,6 +16,7 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -29,33 +31,42 @@ export default function AuditLogs() {
   const [filterRole, setFilterRole] = useState("");
   const [filterAction, setFilterAction] = useState("");
   const [userRole, setUserRole] = useState(null);
+  const [error, setError] = useState("");
 
-  // Fetch audit logs
-  useEffect(() => {
-    // Get user role from localStorage
-    const role = localStorage.getItem("role");
-    if (role) {
-      setUserRole(role.toLowerCase());
-    }
-
-    const fetchAuditLogs = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token") || localStorage.getItem("access_token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        
-        const response = await axios.get(`${API_URL}/api/audit-logs`, { headers });
-        setAuditLogs(response.data || []);
-      } catch (err) {
-        console.error("Error fetching audit logs:", err);
-        setAuditLogs([]);
-      } finally {
-        setLoading(false);
+  const fetchAuditLogs = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Sign in again to view audit logs.");
+      const response = await axios.get(`${API_URL}/api/audit-logs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!Array.isArray(response.data)) {
+        throw new Error("The server returned an invalid audit log response.");
       }
-    };
-
-    fetchAuditLogs();
+      setAuditLogs(response.data);
+    } catch (requestError) {
+      console.error("Error fetching audit logs:", requestError);
+      setAuditLogs([]);
+      const detail = requestError.response?.data?.detail;
+      setError(
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((item) => item.msg).join(", ")
+            : requestError.message || "Could not load audit logs."
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    if (role) setUserRole(role.trim().toLowerCase());
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
 
   // Filter audit logs based on search and filters
   const filteredLogs = auditLogs.filter((log) => {
@@ -129,11 +140,39 @@ export default function AuditLogs() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
       <Paper sx={{ p: 3, borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ mb: 3, fontWeight: 700 }}>
-          📋 Audit Logs - System Access & Activity
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, mb: 3 }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              Audit Logs
+            </Typography>
+            <Typography color="text.secondary">
+              Review user activity and system changes.
+            </Typography>
+          </Box>
+          <Button
+            onClick={fetchAuditLogs}
+            startIcon={<RefreshIcon />}
+            variant="outlined"
+          >
+            Refresh
+          </Button>
+        </Box>
+
+        {error && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={fetchAuditLogs}>
+                Retry
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        )}
 
         {/* Filters */}
         <Box
@@ -237,8 +276,8 @@ export default function AuditLogs() {
 
         {/* Table */}
         {filteredLogs.length > 0 ? (
-          <TableContainer sx={{ maxHeight: 600 }}>
-            <Table stickyHeader>
+          <TableContainer sx={{ maxHeight: "70vh" }}>
+            <Table stickyHeader sx={{ minWidth: 1050 }}>
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
                   <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
@@ -291,7 +330,10 @@ export default function AuditLogs() {
                       {log.ip_address || "-"}
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>
-                      {new Date(log.created_at).toLocaleString()}
+                      {new Date(log.created_at).toLocaleString(undefined, {
+                        dateStyle: "short",
+                        timeStyle: "medium",
+                      })}
                     </TableCell>
                   </TableRow>
                 ))}

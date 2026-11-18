@@ -1,477 +1,370 @@
-
-import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
+  Alert,
   Box,
-  Typography,
-  Tabs,
-  Tab,
-  Paper,
-  TextField,
-  Chip,
-  Stack,
   Button,
+  Chip,
+  CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
   Table,
+  TableBody,
+  TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  TableCell,
-  TableBody,
-  TableContainer,
+  TextField,
   Toolbar,
-  Collapse,
-  Modal,
-  CircularProgress,
-  IconButton,
+  Typography,
 } from "@mui/material";
-import { ExpandMore, ExpandLess } from "@mui/icons-material";
-import ViewResults from "../components/NewRequest/ViewResults";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 import { API_URL } from "../utils/api";
+import ViewResults from "../components/NewRequest/ViewResults";
 
-const LabRequestsPage = () => {
-  const [tab, setTab] = useState(0);
-  const [requests, setRequests] = useState([]);
+const formatDate = (value) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : date.toLocaleString(undefined, { dateStyle: "short", timeStyle: "medium" });
+};
+
+const getApiErrorMessage = (error, fallback) => {
+  const detail = error.response?.data?.detail;
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (detail) return JSON.stringify(detail);
+  if (typeof error.response?.data === "string" && error.response.data.trim()) {
+    return error.response.data;
+  }
+  if (error.response) return `${fallback} (HTTP ${error.response.status}).`;
+  return error.message || fallback;
+};
+
+const LabResults = () => {
+  const [results, setResults] = useState([]);
   const [search, setSearch] = useState("");
-  const [expandedRow, setExpandedRow] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedResult, setSelectedResult] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [labResultsCache, setLabResultsCache] = useState({});
-  const [loading, setLoading] = useState({});
-
-  const navigate = useNavigate();
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState("");
   const token = localStorage.getItem("token");
-  const storedUser = localStorage.getItem("user");
-  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-  const role = parsedUser?.role || localStorage.getItem("role") || "";
-  const normalizedRole = String(role).trim().toLowerCase().replace(/[\s_-]/g, "");
 
-  /* ================= FETCH LAB REQUESTS ================= */
-  useEffect(() => {
-    axios
-      .get(`${API_URL}/lab-requests/`, {
+  const loadResults = useCallback(async () => {
+    if (!token) {
+      setError("You must sign in to view lab results.");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.get(`${API_URL}/lab-results/`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setRequests(res.data))
-      .catch((err) => console.error("Failed to load lab requests", err));
+      });
+      setResults(Array.isArray(response.data) ? response.data : []);
+    } catch (requestError) {
+      console.error("Failed to load lab results", requestError);
+      setError(getApiErrorMessage(requestError, "Could not load lab results."));
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
-  /* ================= FETCH LAB RESULTS FOR SPECIFIC REQUEST ================= */
-  const fetchLabResults = async (requestId) => {
-    if (labResultsCache[requestId]) {
-      return labResultsCache[requestId];
-    }
+  useEffect(() => {
+    loadResults();
+  }, [loadResults]);
 
-    setLoading((prev) => ({ ...prev, [requestId]: true }));
+  const filteredResults = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return results;
+
+    return results.filter((result) =>
+      [
+        result.patient_first_name,
+        result.patient_last_name,
+        result.test_name,
+        result.results,
+        result.flag,
+        result.comment,
+        result.patient_id,
+        result.lab_request_id,
+        result.request_status,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term)
+    );
+  }, [results, search]);
+
+  const recordedCount = filteredResults.filter(
+    (result) => String(result.results ?? "").trim() !== ""
+  ).length;
+  const flaggedCount = filteredResults.filter(
+    (result) => String(result.flag ?? "").trim() !== ""
+  ).length;
+
+  const openReport = async (result) => {
+    setSelectedResult(result);
+    setSelectedRequest(null);
+    setReportError("");
+    setReportLoading(true);
+
     try {
-      const res = await axios.get(
-        `${API_URL}/lab-requests/${requestId}/results/`,
+      const response = await axios.get(
+        `${API_URL}/lab-requests/${result.lab_request_id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const results = Array.isArray(res.data) ? res.data : [];
-      setLabResultsCache((prev) => ({ ...prev, [requestId]: results }));
-      return results;
-    } catch (err) {
-      console.error(`Failed to load lab results for request ${requestId}`, err);
-      return [];
+      setSelectedRequest(response.data);
+    } catch (requestError) {
+      console.error("Failed to load request details for lab report", requestError);
+      setReportError(getApiErrorMessage(requestError, "Could not load the lab report."));
     } finally {
-      setLoading((prev) => ({ ...prev, [requestId]: false }));
+      setReportLoading(false);
     }
   };
 
-  const normalizeLabResult = (lr) => ({
-    id: lr.id ?? lr.lab_test_id ?? lr.test_name ?? `${lr.test_name}-${Math.random()}`,
-    test_name: lr.test_name ?? lr.name ?? "Unknown Test",
-    results: lr.results ?? lr.test_result ?? lr.result ?? "",
-    unit: lr.unit ?? lr.test_unit ?? "",
-    ref_range: lr.ref_range ?? lr.refRange ?? "",
-    flag: lr.flag ?? "",
-    comment: lr.comment ?? "",
-    category: lr.category ?? lr.lab_test?.category ?? "Other",
-  });
-
-  const groupTestsByCategory = (tests) =>
-    tests
-      .map(normalizeLabResult)
-      .reduce((groups, lr) => {
-        const category = lr.category || "Other";
-        if (!groups[category]) groups[category] = [];
-        groups[category].push(lr);
-        return groups;
-      }, {});
-
-  const getRequestTests = (req) => {
-    if (!req) return [];
-    const cached = labResultsCache[req.id];
-    if (Array.isArray(cached) && cached.length > 0) return cached;
-
-    if (Array.isArray(req.lab_results) && req.lab_results.length > 0) return req.lab_results;
-    if (Array.isArray(req.labresult_set) && req.labresult_set.length > 0) return req.labresult_set;
-    return [];
-  };
-
-  const handleToggleRow = (req) => {
-    const nextExpanded = expandedRow === req.id ? null : req.id;
-    if (nextExpanded === req.id && !labResultsCache[req.id]) {
-      fetchLabResults(req.id);
-    }
-    setExpandedRow(nextExpanded);
-  };
-
-  const handleEditRequest = async (req) => {
-    const patientData = {
-      lastName: req.patient?.last_name ?? "",
-      firstName: req.patient?.first_name ?? "",
-      dob: req.patient?.dob ?? "",
-      gender: req.patient?.gender ?? "",
-      phone: req.patient?.phone ?? "",
-      email: req.patient?.email ?? "",
-      address: req.patient?.address ?? "",
-      funding: req.patient?.funding ?? "CASH (ZWL)",
-      memberNumber: req.patient?.member_number ?? "",
-      memberSuffix: req.patient?.member_suffix ?? "",
-      relationship: req.patient?.relationship ?? "Self",
-      principal: req.patient?.principal ?? true,
-      facility: req.patient?.facility ?? "",
-      doctorName: req.patient?.doctor_name ?? "",
-      ahFoz: req.patient?.ah_foz ?? "",
-      clinicalData: req.patient?.clinical_data ?? "",
-    };
-
-    let requestTests = getRequestTests(req);
-    if (requestTests.length === 0) {
-      requestTests = await fetchLabResults(req.id);
-    }
-
-    const selectedTestsForEdit = requestTests.map((lr) => {
-      const row = normalizeLabResult(lr);
-      const labTestId = lr.lab_test_id ?? lr.labTestId ?? row.lab_test_id ?? row.id;
-      return {
-        id: Number(labTestId) || row.id,
-        name: row.test_name,
-        category: row.category || "Other",
-        result: row.results || "",
-        unit: row.unit || "",
-        refRange: row.ref_range || "",
-        flag: row.flag || "",
-        comment: row.comment || "",
-      };
-    });
-
-    localStorage.setItem("newRequest_patient", JSON.stringify(patientData));
-    localStorage.setItem("newRequest_selectedTests", JSON.stringify(selectedTestsForEdit));
-    localStorage.setItem("newRequest_requestId", JSON.stringify(req.id));
-    localStorage.setItem("newRequest_patientId", JSON.stringify(req.patient?.id ?? null));
-    localStorage.setItem("newRequest_selectedRequest", JSON.stringify({ id: req.id, patient_id: req.patient?.id ?? null }));
-    localStorage.setItem("newRequest_sampleDate", JSON.stringify(req.sample_date ?? ""));
-
-    navigate("/dashboard/new-request");
-  };
-
-  /* ================= SEARCH ================= */
-  const filteredRequests = useMemo(() => {
-    const term = search.toLowerCase();
-    return requests.filter((r) => {
-      const patientName = `${r.patient?.first_name ?? ""} ${r.patient?.last_name ?? ""}`.toLowerCase();
-      const idMatch = String(r.id).includes(term);
-      return patientName.includes(term) || idMatch;
-    });
-  }, [requests, search]);
-
-  const requestCounts = useMemo(() => {
-    let totalTests = 0;
-    let recordedTests = 0;
-
-    filteredRequests.forEach((req) => {
-      const requestTests = getRequestTests(req);
-      totalTests += requestTests.length;
-      recordedTests += requestTests.filter((r) => r.results || r.test_result || r.result).length;
-    });
-
-    return { totalTests, recordedTests };
-  }, [filteredRequests, labResultsCache]);
-
-  /* ================= STATUS TABS ================= */
-  const allRequests = filteredRequests;
-  const pending = filteredRequests.filter((r) => r.status === "Pending");
-  const partial = filteredRequests.filter((r) => r.status === "Partially Completed");
-  const completed = filteredRequests.filter((r) => r.status === "Completed");
-  const tabData = [allRequests, pending, partial, completed];
-
-  const statusColor = (status) => {
-    if (status === "Completed") return "success";
-    if (status === "Partially Completed") return "warning";
-    return "error";
-  };
-
-  /* ================= MODAL HANDLERS ================= */
-  const openModal = async (request) => {
-    setSelectedRequest(request);
-    const requestTests = getRequestTests(request);
-    if (requestTests.length > 0 && !labResultsCache[request.id]) {
-      setLabResultsCache((prev) => ({
-        ...prev,
-        [request.id]: requestTests.map(normalizeLabResult),
-      }));
-    } else {
-      await fetchLabResults(request.id);
-    }
-    setModalOpen(true);
-  };
-  const closeModal = () => {
+  const closeReport = () => {
+    setSelectedResult(null);
     setSelectedRequest(null);
-    setModalOpen(false);
+    setReportError("");
   };
 
-  /* ================= UI ================= */
   return (
-    <Container maxWidth="lg" sx={{ mt: 2, p: 2, m: -10 }}>
-      <Paper elevation={4} sx={{ borderRadius: 3 }}>
-        {/* HEADER */}
-        <Toolbar sx={{ borderBottom: "1px solid #ddd" }}>
-          <Typography variant="h5" fontWeight={600}>
-            Lab Requests
-          </Typography>
+    <Container maxWidth="xl" sx={{ mt: 0, px: { xs: 0, md: 1 }, mb: 4 }}>
+      <Paper elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
+        <Toolbar
+          sx={{
+            minHeight: 64,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            justifyContent: "space-between",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="h5" fontWeight={650}>
+              Lab Results
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              All recorded test results, independently of the request list
+            </Typography>
+          </Box>
+          <Button
+            startIcon={<RefreshIcon />}
+            onClick={loadResults}
+            disabled={loading}
+            variant="outlined"
+          >
+            Refresh
+          </Button>
         </Toolbar>
 
-        {/* TABS */}
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} centered>
-          <Tab label={`All (${allRequests.length})`} />
-          <Tab label={`Pending (${pending.length})`} />
-          <Tab label={`Partially Completed (${partial.length})`} />
-          <Tab label={`Completed (${completed.length})`} />
-        </Tabs>
-
-        {/* SEARCH */}
-        <Box sx={{ p: 1 }}>
+        <Box sx={{ p: 2 }}>
           <TextField
             fullWidth
             size="small"
-            placeholder="Search patient, test, or request ID..."
+            label="Search results"
+            placeholder="Patient, test, result, flag, or request ID"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
           />
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
+            <Chip label={`${filteredResults.length} results`} color="primary" size="small" />
+            <Chip label={`${recordedCount} with values`} variant="outlined" size="small" />
+            <Chip
+              label={`${flaggedCount} flagged`}
+              color={flaggedCount ? "warning" : "default"}
+              variant={flaggedCount ? "filled" : "outlined"}
+              size="small"
+            />
+          </Stack>
         </Box>
 
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, p: 1 }}>
-          <Chip label={`Displayed requests: ${filteredRequests.length}`} color="primary" size="small" />
-          <Chip label={`Total tests: ${requestCounts.totalTests}`} variant="outlined" size="small" />
-          <Chip label={`Recorded results: ${requestCounts.recordedTests}`} variant="outlined" size="small" />
-        </Box>
+        {error && (
+          <Alert
+            severity="error"
+            sx={{ mx: 2, mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={loadResults}>
+                Retry
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        )}
 
-        {/* TABLE */}
-        <TableContainer sx={{ maxHeight: "70vh" }}>
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell><b>ID</b></TableCell>
-                <TableCell><b>Patient</b></TableCell>
-                <TableCell><b>Request Date</b></TableCell>
-                <TableCell><b>Status</b></TableCell>
-                <TableCell><b>Total Tests</b></TableCell>
-                <TableCell><b>Completed</b></TableCell>
-                <TableCell><b>Actions</b></TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {tabData[tab].map((req) => (
-                <React.Fragment key={req.id}>
-                  {/* MAIN ROW */}
-                  <TableRow
-                    hover
-                    sx={{ cursor: "pointer" }}
-                    onClick={() => handleToggleRow(req)}
-                  >
-                    <TableCell>{req.id}</TableCell>
-                    <TableCell>
-                      {req.patient.first_name} {req.patient.last_name}
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer sx={{ maxHeight: "70vh" }}>
+            <Table stickyHeader size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Recorded</TableCell>
+                  <TableCell>Patient</TableCell>
+                  <TableCell>Test</TableCell>
+                  <TableCell>Result</TableCell>
+                  <TableCell>Flag</TableCell>
+                  <TableCell>Request</TableCell>
+                  <TableCell>Request status</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredResults.map((result) => (
+                  <TableRow key={result.id} hover>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {formatDate(result.created_at)}
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontSize: 12, color: "text.secondary" }}>
-                        {req.sample_date || req.created_at ? `${req.sample_date || ""}${req.sample_date && req.created_at ? " / " : ""}${req.created_at ? new Date(req.created_at).toLocaleString() : ""}` : "—"}
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {[result.patient_first_name, result.patient_last_name]
+                          .filter(Boolean)
+                          .join(" ") || "Unknown patient"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Patient #{result.patient_id}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={req.status}
-                        size="small"
-                        color={statusColor(req.status)}
-                      />
+                      <Typography variant="body2" fontWeight={600}>
+                        {result.test_name || "—"}
+                      </Typography>
+                      {result.category && (
+                        <Typography variant="caption" color="text.secondary">
+                          {result.category}
+                        </Typography>
+                      )}
                     </TableCell>
-                    <TableCell>{getRequestTests(req).length}</TableCell>
                     <TableCell>
-                      {getRequestTests(req).filter((r) => r.results || r.test_result || r.result).length}
+                      {String(result.results ?? "").trim() || (
+                        <Typography component="span" color="text.secondary">
+                          Pending
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openModal(req);
-                          }}
-                        >
-                          View
-                        </Button>
-
-                        <Button
-                          size="small"
-                          variant="contained"
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditRequest(req);
-                          }}
-                        >
-                          Edit
-                        </Button>
-
-                        {(normalizedRole === "admin" || normalizedRole === "labtech" || normalizedRole === "labtechnician") && (
-                          <Button size="small" color="secondary">
-                            Authorize
-                          </Button>
-                        )}
-                      </Stack>
+                      {result.flag ? (
+                        <Chip size="small" color="warning" label={result.flag} />
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>#{result.lab_request_id}</TableCell>
+                    <TableCell>{result.request_status || "—"}</TableCell>
+                    <TableCell>
+                      <Button size="small" onClick={() => openReport(result)}>
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
-
-                  {/* EXPANDED LAB RESULTS */}
+                ))}
+                {!error && filteredResults.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} sx={{ p: 0 }}>
-                      <Collapse in={expandedRow === req.id}>
-                        <Box sx={{ p: 2, bgcolor: "#fafafa" }}>
-                          <Typography fontWeight="bold" gutterBottom>
-                            Lab Results
-                          </Typography>
-
-                          {loading[req.id] ? (
-                            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                              <CircularProgress size={32} />
-                            </Box>
-                          ) : (() => {
-                            const requestTests = getRequestTests(req);
-                            if (requestTests.length === 0) {
-                              return (
-                                <Typography color="textSecondary">
-                                  No lab results yet for this request
-                                </Typography>
-                              );
-                            }
-
-                            const grouped = groupTestsByCategory(requestTests);
-                            const categories = Object.keys(grouped).sort();
-
-                            return (
-                              <Table size="small">
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell><b>Test</b></TableCell>
-                                    <TableCell><b>Result</b></TableCell>
-                                    <TableCell><b>Unit</b></TableCell>
-                                    <TableCell><b>Ref Range</b></TableCell>
-                                    <TableCell><b>Flag</b></TableCell>
-                                    <TableCell><b>Comment</b></TableCell>
-                                  </TableRow>
-                                </TableHead>
-
-                                <TableBody>
-                                  {categories.map((category) => (
-                                    <React.Fragment key={category}>
-                                      <TableRow sx={{ backgroundColor: "#f7f7f7" }}>
-                                        <TableCell colSpan={6} sx={{ fontWeight: 700 }}>
-                                          {category}
-                                        </TableCell>
-                                      </TableRow>
-                                      {grouped[category].map((lr, idx) => {
-                                        const row = normalizeLabResult(lr);
-                                        return (
-                                          <TableRow key={row.id ?? `${category}-${idx}`}>
-                                            <TableCell>{row.test_name}</TableCell>
-                                            <TableCell>{row.results || "—"}</TableCell>
-                                            <TableCell>{row.unit || "—"}</TableCell>
-                                            <TableCell>{row.ref_range || "—"}</TableCell>
-                                            <TableCell>{row.flag || "—"}</TableCell>
-                                            <TableCell>{row.comment || "—"}</TableCell>
-                                          </TableRow>
-                                        );
-                                      })}
-                                    </React.Fragment>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            );
-                          })()}
-                        </Box>
-                      </Collapse>
+                    <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
+                      <Typography color="text.secondary">
+                        {search
+                          ? "No results match your search."
+                          : "No lab results have been recorded yet."}
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
-
-      {/* MODAL VIEW RESULTS */}
-      <Modal
-        open={modalOpen}
-        onClose={closeModal}
-        aria-labelledby="view-results-modal"
-        aria-describedby="view-results-description"
+      <Dialog
+        open={Boolean(selectedResult)}
+        onClose={closeReport}
+        fullWidth
+        maxWidth="lg"
       >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "90%",
-            maxHeight: "90vh",
-            overflowY: "auto",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            borderRadius: 2,
-            p: 3,
-          }}
-        >
-          {selectedRequest && (
+        <DialogTitle>Lab report</DialogTitle>
+        {reportLoading ? (
+          <DialogContent dividers>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+              <CircularProgress />
+            </Box>
+          </DialogContent>
+        ) : reportError ? (
+          <DialogContent dividers>
+            <Alert
+              severity="error"
+              action={
+                selectedResult && (
+                  <Button color="inherit" size="small" onClick={() => openReport(selectedResult)}>
+                    Retry
+                  </Button>
+                )
+              }
+            >
+              {reportError}
+            </Alert>
+          </DialogContent>
+        ) : selectedResult && selectedRequest ? (
+          <DialogContent dividers>
             <ViewResults
-              selectedTests={getRequestTests(selectedRequest).map((lr) => {
-                const row = normalizeLabResult(lr);
-                return {
-                  id: row.id,
-                  name: row.test_name,
-                  result: row.results,
-                  unit: row.unit,
-                  refRange: row.ref_range,
-                  flag: row.flag,
-                  comment: row.comment,
-                  category: row.category,
-                  labTestId: lr.lab_test_id ?? row.id,
-                };
-              })}
-              labResults={getRequestTests(selectedRequest).map(normalizeLabResult)}
+              selectedTests={results
+                .filter(
+                  (result) =>
+                    String(result.lab_request_id) ===
+                    String(selectedResult.lab_request_id)
+                )
+                .map((result) => ({
+                  id: result.id,
+                  name: result.test_name || "Unknown Test",
+                  category: result.category || "Other",
+                  result: result.results ?? "",
+                  unit: result.unit ?? "",
+                  refRange: result.ref_range ?? "",
+                  flag: result.flag ?? "",
+                  comment: result.comment ?? "",
+                }))}
               patient={{
-                firstName: selectedRequest.patient.first_name,
-                lastName: selectedRequest.patient.last_name,
-                dob: selectedRequest.patient.dob,
-                gender: selectedRequest.patient.gender,
-                facility: selectedRequest.patient.facility,
-                funding: selectedRequest.patient.funding,
-                clinicalData: selectedRequest.patient.clinical_data,
-                doctorName: selectedRequest.patient.doctor_name,
+                firstName:
+                  selectedRequest.patient?.first_name ||
+                  selectedResult.patient_first_name ||
+                  "",
+                lastName:
+                  selectedRequest.patient?.last_name ||
+                  selectedResult.patient_last_name ||
+                  "",
+                dob: selectedRequest.patient?.dob || "",
+                gender: selectedRequest.patient?.gender || "",
+                facility: selectedRequest.patient?.facility || "",
+                funding: selectedRequest.patient?.funding || "",
+                clinicalData: selectedRequest.patient?.clinical_data || "",
+                doctorName: selectedRequest.patient?.doctor_name || "",
               }}
               requestId={selectedRequest.id}
-              sampleDate={selectedRequest.sample_date}
+              sampleDate={
+                selectedRequest.sample_date ||
+                formatDate(selectedRequest.created_at)
+              }
             />
-          )}
-        </Box>
-      </Modal>
+          </DialogContent>
+        ) : null}
+        <DialogActions>
+          <Button onClick={closeReport}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
 
-export default LabRequestsPage;
+export default LabResults;

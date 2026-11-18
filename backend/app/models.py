@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, Integer, String, Date, DateTime,
     ForeignKey, Text, Boolean
 )
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship as orm_relationship, declarative_base
 from datetime import datetime
 from passlib.hash import bcrypt
 from sqlalchemy.sql import func
@@ -19,6 +19,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    must_change_password = Column(Boolean, nullable=False, default=False)
    
     def verify_password(self, password: str) :
         return pwd_context.verify(password[:72], self.hashed_password)
@@ -49,19 +50,25 @@ class Patient(Base):
     last_name = Column(String, nullable=False)
     dob = Column(Date)
     gender = Column(String)
+    phone = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    address = Column(String, nullable=True)
     facility = Column(String)
     funding = Column(String)
     member_number = Column(String, nullable=True)
     member_suffix = Column(String, nullable=True)
+    relationship = Column(String, nullable=True)
+    principal = Column(Boolean, nullable=False, default=True)
     doctor_name = Column(String, nullable=True)
+    ah_foz = Column(String, nullable=True)
     clinical_data = Column(String, nullable=True)
     request_id = Column(Integer, nullable=True)
     sample_date = Column(String, nullable=True)
 
-    lab_requests = relationship(
+    lab_requests = orm_relationship(
         "LabRequest", back_populates="patient", cascade="all, delete"
     )
-    lab_results = relationship(
+    lab_results = orm_relationship(
         "LabResult", back_populates="patient", cascade="all, delete"
     )
 
@@ -80,7 +87,7 @@ class LabTest(Base):
     name = Column(String, nullable=False)
     category = Column(String, nullable=False)
 
-    lab_results = relationship(
+    lab_results = orm_relationship(
         "LabResult", back_populates="lab_test", cascade="all, delete"
     )
 
@@ -96,8 +103,8 @@ class LabRequest(Base):
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    patient = relationship("Patient", back_populates="lab_requests")
-    lab_results = relationship(
+    patient = orm_relationship("Patient", back_populates="lab_requests")
+    lab_results = orm_relationship(
         "LabResult", back_populates="lab_request", cascade="all, delete"
     )
 
@@ -125,9 +132,9 @@ class LabResult(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    patient = relationship("Patient", back_populates="lab_results")
-    lab_test = relationship("LabTest", back_populates="lab_results")
-    lab_request = relationship("LabRequest", back_populates="lab_results")
+    patient = orm_relationship("Patient", back_populates="lab_results")
+    lab_test = orm_relationship("LabTest", back_populates="lab_results")
+    lab_request = orm_relationship("LabRequest", back_populates="lab_results")
 
 
 class PaymentCode(Base):

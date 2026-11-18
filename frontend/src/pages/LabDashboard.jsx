@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, Divider, Button } from "@mui/material";
+import DashboardAnalytics from "../components/dashboard/DashboardAnalytics";
 
 const LabDashboard = () => {
   const handleLogout = () => {
@@ -11,11 +12,10 @@ const LabDashboard = () => {
   return (
     <Box
       sx={{
-        p: 2,
-        m: -8,
-        minHeight: "100vh",
-        maxWidth: 1200,
-        backgroundColor: "#f9f9f9",
+        p: 0,
+        minHeight: "calc(100vh - 64px)",
+        width: "100%",
+        backgroundColor: "transparent",
       }}
     >
       {/* Header */}
@@ -45,23 +45,7 @@ const LabDashboard = () => {
 
       <Divider sx={{ mb: 3, borderColor: "#070707ff" }} />
 
-      {/* Embedded Website */}
-      <Box
-        sx={{
-          width: "100%",
-          height: "80vh",
-          border: "none",
-          boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
-        }}
-      >
-        <iframe
-          src="https://www.biotechinst.com"
-          title="Biotech Institute Website"
-          width="100%"
-          height="100%"
-          style={{ border: "none" }}
-        />
-      </Box>
+      <DashboardAnalytics />
     </Box>
   );
 };

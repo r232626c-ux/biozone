@@ -2551,10 +2551,11 @@ const default_tests = {
   ],
   "Hematology": [
     "PDW","Reticulocyte Count","Peripheral Blood Smear","ESR","INR","D-Dimer",
-    "Fasting Blood Sugar","Folic Acid","Lactic acid","Serum Amylase","Serum Iron Levels","Retic Count"
+    "Folic Acid","Lactic acid","Retic Count"
   ],
   "Chemistry Tests": [
-    "Blood Glucose (RBS)","Uric Acid","Total Cholesterol","HDL Cholesterol",
+    "Blood Glucose (RBS)","Fasting Blood Sugar","Serum Iron Levels","Serum Amylase",
+    "Uric Acid","Total Cholesterol","HDL Cholesterol",
     "LDL Cholesterol","VLDL Cholesterol","Triglycerides","Urea","ALT","AST",
     "LFT","GGT","Total Bilirubin","Sodium","Potassium","Bicarbonate","Calcium",
     "Magnesium","Glycosylated Hb","Creatine","Creatinine","BUN","Albumin",

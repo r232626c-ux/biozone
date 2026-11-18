@@ -90,37 +90,19 @@ export default function PatientRecords() {
     return dob.split("T")[0]; // Remove time if ISO string
   };
 
-  const formatDate = (value) => {
+  const formatDateTime = (value) => {
     if (!value) return "-";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toISOString().split("T")[0];
+    return date.toLocaleString(undefined, { dateStyle: "short", timeStyle: "medium" });
   };
 
   const requestMonth = (request) => {
-    const dateValue = request.sample_date || request.created_at;
+    const dateValue = request.created_at;
     if (!dateValue) return null;
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date.getMonth() + 1;
   };
-
-  const patientRecordedDates = useMemo(() => {
-    const dates = {};
-    labRequests.forEach((request) => {
-      const patientId = request.patient_id;
-      if (!patientId) return;
-      const dateValue = request.sample_date || request.created_at;
-      if (!dateValue) return;
-      const requestDate = new Date(dateValue);
-      if (Number.isNaN(requestDate.getTime())) return;
-      const month = requestDate.getMonth() + 1;
-      if (selectedMonth !== 0 && month !== selectedMonth) return;
-      if (!dates[patientId] || requestDate > dates[patientId]) {
-        dates[patientId] = requestDate;
-      }
-    });
-    return dates;
-  }, [labRequests, selectedMonth]);
 
   const monthlyRequestCounts = useMemo(() => {
     const counts = Array(12).fill(0);
@@ -140,44 +122,73 @@ export default function PatientRecords() {
     return counts;
   }, [labRequests]);
 
-  const filteredPatients = useMemo(() => {
-    const filteredRequestIds = new Set(
-      labRequests
-        .filter((request) => selectedMonth === 0 || requestMonth(request) === selectedMonth)
-        .map((request) => request.patient_id)
-    );
+  const visitRows = useMemo(() => {
+    const patientsById = new Map(patients.map((patient) => [patient.id, patient]));
+    const rows = labRequests
+      .filter(
+        (request) =>
+          selectedMonth === 0 || requestMonth(request) === selectedMonth
+      )
+      .map((request) => ({
+        request,
+        patient: request.patient || patientsById.get(request.patient_id) || null,
+      }))
+      .sort((a, b) => {
+        const timeA = new Date(a.request.created_at || 0).getTime();
+        const timeB = new Date(b.request.created_at || 0).getTime();
+        return timeB - timeA;
+      });
 
-    const matchingPatients = selectedMonth === 0 && labRequests.length === 0
-      ? patients
-      : patients.filter((patient) => filteredRequestIds.has(patient.id));
+    if (selectedMonth === 0) {
+      const patientsWithRequests = new Set(
+        labRequests.map((request) => request.patient_id).filter(Boolean)
+      );
+      patients
+        .filter((patient) => !patientsWithRequests.has(patient.id))
+        .forEach((patient) => rows.push({ request: null, patient }));
+    }
 
-    return matchingPatients.sort((a, b) => {
-      const dateA = patientRecordedDates[a.id]?.getTime() ?? Number.MAX_SAFE_INTEGER;
-      const dateB = patientRecordedDates[b.id]?.getTime() ?? Number.MAX_SAFE_INTEGER;
-      if (dateA !== dateB) return dateA - dateB;
-      return (a.id || 0) - (b.id || 0);
-    });
-  }, [patients, labRequests, selectedMonth, patientRecordedDates]);
+    return rows;
+  }, [patients, labRequests, selectedMonth]);
 
   const tableRows = useMemo(() => {
-    return filteredPatients.map((patient) => ({
-      id: patient.id,
-      date: formatDate(patientRecordedDates[patient.id]),
-      requests: requestCountsByPatient[patient.id] || 0,
-      firstName: patient.first_name,
-      lastName: patient.last_name,
-      gender: patient.gender,
-      dob: formatDOB(patient.dob),
-      facility: patient.facility,
-      funding: patient.funding,
-      delivered: deliveredStatus[patient.id] || "",
-    }));
-  }, [filteredPatients, patientRecordedDates, requestCountsByPatient, deliveredStatus]);
+    return visitRows.map(({ request, patient }) => {
+      const deliveryKey = request?.id ?? patient?.id;
+      return {
+        id: patient?.id ?? request?.patient_id ?? "—",
+        visitId: request?.id ?? "—",
+        date: formatDateTime(request?.created_at),
+        requests: requestCountsByPatient[patient?.id] || 0,
+        firstName: patient?.first_name || "Unknown",
+        lastName: patient?.last_name || "patient",
+        gender: patient?.gender || "—",
+        dob: formatDOB(patient?.dob),
+        facility: patient?.facility || "—",
+        funding: patient?.funding || "—",
+        deliveryKey,
+        delivered: deliveredStatus[deliveryKey] || "",
+      };
+    });
+  }, [visitRows, requestCountsByPatient, deliveredStatus]);
 
   const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(tableRows, {
+    const exportRows = tableRows.map((row) => ({
+      id: row.id,
+      visitId: row.visitId,
+      date: row.date,
+      requests: row.requests,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      gender: row.gender,
+      dob: row.dob,
+      facility: row.facility,
+      funding: row.funding,
+      delivered: row.delivered,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(exportRows, {
       header: [
         "id",
+        "visitId",
         "date",
         "requests",
         "firstName",
@@ -199,6 +210,7 @@ export default function PatientRecords() {
     const doc = new jsPDF({ orientation: "landscape" });
     const headers = [
       "ID",
+      "Visit ID",
       "Date",
       "Requests",
       "First Name",
@@ -211,6 +223,7 @@ export default function PatientRecords() {
     ];
     const data = tableRows.map((row) => [
       row.id,
+      row.visitId,
       row.date,
       row.requests,
       row.firstName,
@@ -239,16 +252,16 @@ export default function PatientRecords() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 5, m: -5, width: "100%", maxWidth: "100%" }}>
-      <Paper elevation={4} sx={{ borderRadius: 10, overflow: "hidden", width: "100%" }}>
+    <Container maxWidth="xl" sx={{ mt: 0, mb: 4, width: "100%", maxWidth: "100%" }}>
+      <Paper elevation={0} sx={{ borderRadius: 2, overflow: "hidden", width: "100%" }}>
         {/* HEADER BAR */}
-        <Toolbar sx={{ backgroundColor: "#e3f2fd", borderBottom: "1px solid #ddd" }}>
+        <Toolbar sx={{ backgroundColor: "#f4f8f4", borderBottom: "1px solid", borderColor: "divider" }}>
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
             Patient Monthly Records
           </Typography>
         </Toolbar>
 
-        <Box sx={{ p: 2, display: "flex", flexWrap: "wrap", gap: 1, backgroundColor: "#f9fbfd" }}>
+        <Box sx={{ p: 2, display: "flex", flexWrap: "wrap", gap: 1, backgroundColor: "#fafcf9" }}>
           <Button
             size="small"
             variant={selectedMonth === 0 ? "contained" : "outlined"}
@@ -272,10 +285,10 @@ export default function PatientRecords() {
 
         <Box sx={{ p: 2 }}>
           <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Showing patients linked to: <strong>{selectedMonth === 0 ? "All Months" : monthNames[selectedMonth - 1]}</strong>
+            Showing patient visits from: <strong>{selectedMonth === 0 ? "All Months" : monthNames[selectedMonth - 1]}</strong>
           </Typography>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Total patients displayed: {filteredPatients.length}
+            Total visits displayed: {visitRows.length}
           </Typography>
           {userRole && (userRole === "admin" || userRole === "super admin") ? (
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -297,8 +310,9 @@ export default function PatientRecords() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: "bold", width: 50 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: "bold", width: 110 }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: "bold", width: 50 }}>Patient ID</TableCell>
+                <TableCell sx={{ fontWeight: "bold", width: 80 }}>Visit ID</TableCell>
+                <TableCell sx={{ fontWeight: "bold", width: 180 }}>Date &amp; Time</TableCell>
                 <TableCell sx={{ fontWeight: "bold", width: 90 }}>Requests</TableCell>
                 <TableCell sx={{ fontWeight: "bold", width: 120 }}>First Name</TableCell>
                 <TableCell sx={{ fontWeight: "bold", width: 120 }}>Last Name</TableCell>
@@ -311,35 +325,36 @@ export default function PatientRecords() {
             </TableHead>
 
             <TableBody>
-              {filteredPatients.map((patient, index) => (
+              {tableRows.map((row, index) => (
                 <TableRow
-                  key={patient.id}
+                  key={`${row.visitId}-${row.id}`}
                   hover
                   sx={{ backgroundColor: index % 2 === 0 ? "#fafafa" : "white" }}
                 >
-                  <TableCell>{patient.id}</TableCell>
-                  <TableCell>{formatDate(patientRecordedDates[patient.id])}</TableCell>
-                  <TableCell>{requestCountsByPatient[patient.id] || 0}</TableCell>
-                  <TableCell>{patient.first_name}</TableCell>
-                  <TableCell>{patient.last_name}</TableCell>
-                  <TableCell>{patient.gender}</TableCell>
-                  <TableCell>{formatDOB(patient.dob)}</TableCell>
-                  <TableCell>{patient.facility}</TableCell>
-                  <TableCell>{patient.funding}</TableCell>
+                  <TableCell>{row.id}</TableCell>
+                  <TableCell>{row.visitId}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{row.date}</TableCell>
+                  <TableCell>{row.requests}</TableCell>
+                  <TableCell>{row.firstName}</TableCell>
+                  <TableCell>{row.lastName}</TableCell>
+                  <TableCell>{row.gender}</TableCell>
+                  <TableCell>{row.dob}</TableCell>
+                  <TableCell>{row.facility}</TableCell>
+                  <TableCell>{row.funding}</TableCell>
                   <TableCell>
                     <TextField
                       size="small"
-                      value={deliveredStatus[patient.id] || ""}
-                      onChange={(e) => handleDeliveredChange(patient.id, e.target.value)}
+                      value={row.delivered}
+                      onChange={(e) => handleDeliveredChange(row.deliveryKey, e.target.value)}
                       placeholder="Delivered"
                       fullWidth
                     />
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredPatients.length === 0 && (
+              {visitRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                     No patient records found for {selectedMonth === 0 ? "All Months" : monthNames[selectedMonth - 1]}.
                   </TableCell>
                 </TableRow>

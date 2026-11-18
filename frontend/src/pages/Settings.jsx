@@ -1,53 +1,53 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Paper,
-  Divider,
-} from "@mui/material";
+import { Box, Tab, Tabs, Typography } from "@mui/material";
 
-// Import your components for each tab
 import UserManagement from "../components/settings/UserManagement";
 import RolePermissions from "../components/settings/RolePermissions";
 import SystemSettings from "../components/settings/SystemSettings";
-import AuditLogs from "../components/settings/AuditLogs";
 
 const Settings = () => {
   const [tabIndex, setTabIndex] = useState(0);
 
-  const handleTabChange = (event, newIndex) => {
-    setTabIndex(newIndex);
-  };
-
   return (
-    <Box>
-      <Typography variant="h4" sx={{ mb: 3,  m: -8,  p: 2}}>
-       
-      </Typography>
+    <Box sx={{ maxWidth: 1320, mx: "auto", pb: 4 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="overline"
+          sx={{ color: "#0f8a3a", fontWeight: 700, letterSpacing: "0.1em" }}
+        >
+          ADMINISTRATION
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: "-0.03em" }}>
+          Settings
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          Manage user accounts, access permissions, and laboratory settings.
+        </Typography>
+      </Box>
 
       <Tabs
         value={tabIndex}
-        onChange={handleTabChange}
-        sx={{ mb: 2 }}
-        textColor="primary"
-        indicatorColor="primary"
+        onChange={(_, newIndex) => setTabIndex(newIndex)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{
+          mb: 2.5,
+          borderBottom: "1px solid #dde6de",
+          "& .MuiTabs-indicator": { height: 3, borderRadius: "3px 3px 0 0", bgcolor: "#0f8a3a" },
+          "& .MuiTab-root": { minHeight: 48, textTransform: "none", fontWeight: 600 },
+          "& .Mui-selected": { color: "#0b6f2e !important" },
+        }}
       >
         <Tab label="Account Management" />
         <Tab label="Roles & Permissions" />
         <Tab label="System Settings" />
-        <Tab label="Access & Audit Logs" />
       </Tabs>
 
-      <Divider sx={{ mb: 2 }} />
-
-      <Paper sx={{ p: 3 }}>
+      <Box>
         {tabIndex === 0 && <UserManagement />}
         {tabIndex === 1 && <RolePermissions />}
         {tabIndex === 2 && <SystemSettings />}
-        {tabIndex === 3 && <AuditLogs />}
-      </Paper>
+      </Box>
     </Box>
   );
 };

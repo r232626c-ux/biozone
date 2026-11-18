@@ -7,8 +7,6 @@ import {
   Button,
   MenuItem,
   Alert,
-  Paper,
-  Container,
   Typography,
 } from "@mui/material";
 import axios from "axios";
@@ -97,81 +95,76 @@ export default function AdminCreateUserModal({ onClose, editingUser }) {
 
   return (
     <>
-      <DialogTitle disableTypography />
+      <DialogTitle sx={{ color: "#0b6f2e", fontWeight: 700 }}>
+        {editingUser ? "Edit user account" : "Add user account"}
+      </DialogTitle>
 
-      <DialogContent>
-        <Container maxWidth="sm" sx={{ mt: 2, m: 8 }}>
-          <Paper elevation={3} sx={{ p: 4 }}>
-            <Typography variant="h5" gutterBottom textAlign="center">
-              {editingUser ? "Edit User" : "Admin – Create New User"}
-            </Typography>
+      <DialogContent dividers sx={{ borderColor: "#dde6de" }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {editingUser
+            ? "Update this person's account details. Leave the password blank to keep it unchanged."
+            : "Create an individual account and assign the appropriate role."}
+        </Typography>
 
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              textAlign="center"
-              sx={{ mb: 3 }}
-            >
-              {editingUser
-                ? "Modify user details below. Leave password blank to keep the current password."
-                : "Only administrators can add new accounts. Ensure details are correct before submission."}
-            </Typography>
+        {message && (
+          <Alert severity={messageType} sx={{ mb: 2 }}>
+            {message}
+          </Alert>
+        )}
 
-            {message && (
-              <Alert severity={messageType} sx={{ mb: 2 }}>
-                {message}
-              </Alert>
-            )}
+        <TextField
+          label="Username"
+          fullWidth
+          margin="dense"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-            <TextField
-              label="Username"
-              fullWidth
-              margin="normal"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
+        <TextField
+          label="Password"
+          type="password"
+          fullWidth
+          margin="dense"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          helperText={editingUser ? "Leave blank to keep current password" : ""}
+        />
 
-            <TextField
-              label="Password"
-              type="password"
-              fullWidth
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              helperText={editingUser ? "Leave blank to keep current password" : ""}
-            />
+        <TextField
+          label="Email"
+          fullWidth
+          margin="dense"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-            <TextField
-              label="Email"
-              fullWidth
-              margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-            <TextField
-              select
-              label="Role"
-              fullWidth
-              margin="normal"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <MenuItem value="user">User</MenuItem>
-              <MenuItem value="doctor">Doctor</MenuItem>
-              <MenuItem value="labtech">Lab Technician</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-            </TextField>
-          </Paper>
-        </Container>
+        <TextField
+          select
+          label="Role"
+          fullWidth
+          margin="dense"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        >
+          <MenuItem value="user">User</MenuItem>
+          <MenuItem value="doctor">Doctor</MenuItem>
+          <MenuItem value="labtech">Lab Technician</MenuItem>
+          <MenuItem value="admin">Admin</MenuItem>
+        </TextField>
       </DialogContent>
 
-      <DialogActions sx={{ px: 4, pb: 3 }}>
+      <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose}>Close</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={submitting}
+          sx={{
+            bgcolor: "#0f8a3a",
+            "&:hover": { bgcolor: "#0b6f2e" },
+            textTransform: "none",
+            fontWeight: 600,
+          }}
         >
           {submitting
             ? editingUser

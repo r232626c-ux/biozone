@@ -1,12 +1,13 @@
 import { useState } from "react";
 import {
-  Container,
+  Box,
   Paper,
   Typography,
   TextField,
   Button,
   MenuItem,
 } from "@mui/material";
+import BiotechIcon from "@mui/icons-material/Biotech";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -51,12 +52,15 @@ export default function Login() {
 
       // Persist token and user info
       localStorage.setItem("token", data.access_token);
-      const user = { username: data.username, role: data.role };
+      const user = {
+        username: data.username,
+        role: data.role,
+        must_change_password: data.must_change_password === true,
+      };
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("role", data.role || "");
 
-      // Role-based navigation
-      navigate("/dashboard/lab");
+      navigate(user.must_change_password ? "/change-password" : "/dashboard/lab");
     } catch (err) {
       const detail = err.response?.data?.detail;
       setMessage(
@@ -111,10 +115,33 @@ export default function Login() {
   // UI
   // ======================
   return (
-    <Container maxWidth="sm" sx={{ mt: 10, m: 38 }}>
-      <Paper sx={{ p: 4, boxShadow: 3 }}>
-        <Typography variant="h5" textAlign="center" gutterBottom>
-          {isSignup ? "Sign Up" : "Login"}
+    <Box className="auth-page">
+      <Paper className="auth-card" elevation={0}>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
+          <Box
+            sx={{
+              display: "grid",
+              placeItems: "center",
+              width: 52,
+              height: 52,
+              mb: 1.5,
+              borderRadius: 2.5,
+              color: "primary.main",
+              bgcolor: "primary.light",
+            }}
+          >
+            <BiotechIcon fontSize="large" />
+          </Box>
+          <Typography variant="h5" textAlign="center">
+            BIOZONE LIMS
+          </Typography>
+          <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 0.75 }}>
+            Laboratory information and quality management
+          </Typography>
+        </Box>
+
+        <Typography variant="h6" textAlign="left" sx={{ mb: 1 }}>
+          {isSignup ? "Create your account" : "Sign in"}
         </Typography>
 
         <TextField
@@ -172,12 +199,14 @@ export default function Login() {
           </Typography>
         )}
 
-        <Typography textAlign="center" sx={{ mt: 2 }}>
-          {isSignup ? "Already have an account?" : "Don't have an account?"}
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: 2, gap: 0.5 }}>
+          <Typography variant="body2" color="text.secondary">
+            {isSignup ? "Already have an account?" : "Don't have an account?"}
+          </Typography>
           <Button onClick={() => setIsSignup(!isSignup)}>
             {isSignup ? "Login" : "Sign Up"}
           </Button>
-        </Typography>
+        </Box>
 
         {message && (
           <Typography color="error" textAlign="center" sx={{ mt: 2 }}>
@@ -185,6 +214,6 @@ export default function Login() {
           </Typography>
         )}
       </Paper>
-    </Container>
+    </Box>
   );
 }

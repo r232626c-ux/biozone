@@ -16,11 +16,14 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import LabDashboard from "./pages/LabDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NewRequestPage from "./pages/NewRequestPage";
+import LabRequestsPage from "./pages/LabRequestsPage";
 import PatientRecords from "./pages/PatientRecords";
 import AdminCreateUser from "./pages/AdminCreateUser";
 import LabResults from "./pages/LabResults";
 import Settings from "./pages/Settings";
 import AuditLogs from "./pages/AuditLogs";
+import ChangePassword from "./pages/ChangePassword";
+import OutlookEmails from "./pages/OutlookEmails";
 
 // -----------------------------------------
 // Wrapper to fetch lab request data before showing ViewResults
@@ -116,6 +119,14 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
+        <Route
+          path="/change-password"
+          element={
+            <ProtectedRoute passwordChangeOnly>
+              <ChangePassword />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin-only Pages */}
         <Route
@@ -134,7 +145,7 @@ function App() {
         <Route
           path="/dashboard/*"
           element={
-            <ProtectedRoute allowedRoles={["doctor", "labtech", "admin","user" ]}>
+            <ProtectedRoute allowedRoles={["doctor", "labtech", "admin", "super admin", "user"]}>
               <DashboardLayout />
             </ProtectedRoute>
           }
@@ -150,10 +161,19 @@ function App() {
 
           {/* Pages */}
           <Route path="new-request" element={<NewRequestPage />} />
+          <Route path="lab-requests" element={<LabRequestsPage />} />
           <Route path="lab-results" element={<LabResults />} />
+          <Route path="research" element={<OutlookEmails />} />
           <Route path="patients" element={<PatientRecords />} />
           <Route path="settings" element={<Settings />} />
-          <Route path="audit-logs" element={<AuditLogs />} />
+          <Route
+            path="audit-logs"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "super admin"]}>
+                <AuditLogs />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         {/* Catch-all */}

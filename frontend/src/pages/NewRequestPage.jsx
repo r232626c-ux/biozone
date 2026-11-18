@@ -16,11 +16,19 @@ import {
   Button,
   Snackbar,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
+  CircularProgress,
+  Stack,
 } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import dayjs from "dayjs";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 import { API_URL } from "../utils/api";
 import { lab_reference } from "../data/lab_test_reference_data";
@@ -49,6 +57,8 @@ const initialPatient = {
 };
 
 const NewRequestPage = () => {
+  const location = useLocation();
+  const navigationState = location.state;
   const [patient, setPatient] = useState({ ...initialPatient });
   const [tab, setTab] = useState(0);
   const [selectedTests, setSelectedTests] = useState([]);
@@ -58,8 +68,11 @@ const NewRequestPage = () => {
   const [saving, setSaving] = useState(false);
   const [sampleDate, setSampleDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [labResults, setLabResults] = useState([]);
-  const [requests, setRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchMatches, setSearchMatches] = useState([]);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [loadingPatient, setLoadingPatient] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
 
@@ -73,21 +86,43 @@ const NewRequestPage = () => {
         const savedPatientId = localStorage.getItem("newRequest_patientId");
         const savedSelectedRequest = localStorage.getItem("newRequest_selectedRequest");
         const savedSampleDate = localStorage.getItem("newRequest_sampleDate");
+        const isNavigationEdit = navigationState?.mode === "edit";
 
-        if (savedPatient) setPatient(JSON.parse(savedPatient));
-        if (savedTests) setSelectedTests(normalizeSelectedTests(JSON.parse(savedTests)));
-        if (savedRequestRef) setRequestRef(JSON.parse(savedRequestRef));
-        if (savedPatientId) setPatientId(JSON.parse(savedPatientId));
-        if (savedSelectedRequest) setSelectedRequest(JSON.parse(savedSelectedRequest));
-        if (savedSampleDate) setSampleDate(JSON.parse(savedSampleDate));
+        if (isNavigationEdit) {
+          setPatient({ ...initialPatient });
+          setRequestId(null);
+          setRequestRef(null);
+          setPatientId(navigationState.patientId ?? null);
+          setSelectedTests([]);
+          setSelectedRequest(null);
+          setLabResults([]);
+          setSampleDate(dayjs().format("YYYY-MM-DD"));
+        } else {
+          if (savedPatient) setPatient(JSON.parse(savedPatient));
+          if (savedTests) setSelectedTests(normalizeSelectedTests(JSON.parse(savedTests)));
+          if (savedRequestRef) setRequestRef(JSON.parse(savedRequestRef));
+          if (savedPatientId) setPatientId(JSON.parse(savedPatientId));
+          if (savedSelectedRequest) setSelectedRequest(JSON.parse(savedSelectedRequest));
+          if (savedSampleDate) setSampleDate(JSON.parse(savedSampleDate));
+        }
 
         const token = localStorage.getItem("token");
         if (!token) return;
         const headers = { Authorization: `Bearer ${token}` };
 
-        const patientIdValue = savedPatientId ? JSON.parse(savedPatientId) : null;
-        const editedRequest = savedSelectedRequest ? JSON.parse(savedSelectedRequest) : null;
-        const requestIdValue = editedRequest?.id ?? (savedRequestId ? JSON.parse(savedRequestId) : null);
+        const patientIdValue = isNavigationEdit
+          ? navigationState.patientId ?? null
+          : savedPatientId
+            ? JSON.parse(savedPatientId)
+            : null;
+        const editedRequest =
+          !isNavigationEdit && savedSelectedRequest
+            ? JSON.parse(savedSelectedRequest)
+            : null;
+        const requestIdValue =
+          navigationState?.requestId ??
+          editedRequest?.id ??
+          (savedRequestId ? JSON.parse(savedRequestId) : null);
         const parsedRequestId = requestIdValue != null ? Number(requestIdValue) : null;
         const validRequestId = Number.isInteger(parsedRequestId) ? parsedRequestId : null;
 
@@ -130,7 +165,7 @@ const NewRequestPage = () => {
             const labRequest = labReqRes.data;
             setRequestId(labRequest.id);
             setSelectedRequest({ id: labRequest.id, patient_id: labRequest.patient?.id ?? patientIdValue });
-            setSampleDate(labRequest.sample_date ?? "");
+            if (labRequest.sample_date) setSampleDate(labRequest.sample_date);
 
             const labResultsRes = await axios.get(
               `${API_URL}/lab-requests/${validRequestId}/results/`,
@@ -139,9 +174,16 @@ const NewRequestPage = () => {
             const results = Array.isArray(labResultsRes.data) ? labResultsRes.data : [];
             setLabResults(results);
 
-            const savedSelReq = savedSelectedRequest ? JSON.parse(savedSelectedRequest) : null;
+            const savedSelReq =
+              !isNavigationEdit && savedSelectedRequest
+                ? JSON.parse(savedSelectedRequest)
+                : null;
             const savedTestsArray = savedTests ? normalizeSelectedTests(JSON.parse(savedTests)) : null;
-            const sameRequestPersisted = savedSelReq && savedSelReq.id === validRequestId && Array.isArray(savedTestsArray);
+            const sameRequestPersisted =
+              !isNavigationEdit &&
+              savedSelReq &&
+              savedSelReq.id === validRequestId &&
+              Array.isArray(savedTestsArray);
 
             if (sameRequestPersisted) {
               setSelectedTests(savedTestsArray);
@@ -209,7 +251,7 @@ const NewRequestPage = () => {
               console.log("🔍 DEBUG: Tests to set before normalize:", testsToSet.map(t => ({ name: t.name, category: t.category })));
               setSelectedTests(normalizeSelectedTests(testsToSet));
               setTab(2);
-            } else if (savedTestsArray) {
+            } else if (!isNavigationEdit && savedTestsArray) {
               setSelectedTests(savedTestsArray);
               setTab(1);
             }
@@ -226,7 +268,7 @@ const NewRequestPage = () => {
     };
 
     restoreState();
-  }, []);
+  }, [navigationState]);
 
   useEffect(() => {
     try {
@@ -530,6 +572,7 @@ const NewRequestPage = () => {
     }
     setSelectedTests([]);
     setRequestId(null);
+    setRequestRef(null);
     setSelectedRequest(null);
     setLabResults([]);
     setSampleDate(dayjs().format("YYYY-MM-DD"));
@@ -539,6 +582,7 @@ const NewRequestPage = () => {
     // while preserving the current patient info.
     localStorage.setItem("newRequest_selectedTests", JSON.stringify([]));
     localStorage.removeItem("newRequest_requestId");
+    localStorage.removeItem("newRequest_requestRef");
     localStorage.removeItem("newRequest_selectedRequest");
     localStorage.setItem("newRequest_sampleDate", JSON.stringify(dayjs().format("YYYY-MM-DD")));
   };
@@ -547,12 +591,19 @@ const NewRequestPage = () => {
     setPatient({ ...initialPatient });
     setPatientId(null);
     setRequestId(null);
+    setRequestRef(null);
     setSelectedRequest(null);
     setSelectedTests([]);
     setLabResults([]);
     setSampleDate(dayjs().format("YYYY-MM-DD"));
     setSearchQuery("");
     setTab(0);
+    localStorage.setItem("newRequest_selectedTests", JSON.stringify([]));
+    localStorage.removeItem("newRequest_requestId");
+    localStorage.removeItem("newRequest_requestRef");
+    localStorage.removeItem("newRequest_patientId");
+    localStorage.removeItem("newRequest_selectedRequest");
+    localStorage.setItem("newRequest_sampleDate", JSON.stringify(dayjs().format("YYYY-MM-DD")));
     setSnack({ open: true, message: "Enter new patient details and select tests", severity: "info" });
   };
 
@@ -563,7 +614,7 @@ const NewRequestPage = () => {
     }
 
     setSaving(true);
-    let saveStats = { patientsaved: false, requestSaved: false, resultsSaved: 0 };
+    let saveStats = { patientSaved: false, requestSaved: false, resultsSaved: 0 };
 
     try {
       const token = localStorage.getItem("token");
@@ -572,18 +623,8 @@ const NewRequestPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
       let patient_id = patientId;
 
-      // 1️⃣ Check if patient exists or create new
-      const searchQuery = [patient.firstName, patient.lastName].filter(Boolean).join(" ");
-      console.log("🔍 Searching for patient:", searchQuery);
-      const searchRes = await axios.get(
-        `${API_URL}/patients/search/`,
-        { params: { query: searchQuery }, headers }
-      );
-
-      if (searchRes.data && searchRes.data.length > 0) {
-        patient_id = searchRes.data[0].id;
-        console.log("👤 Found existing patient ID:", patient_id);
-      } else if (!patient_id) {
+      // Only a patient explicitly selected from Search may reuse an existing record.
+      if (!patient_id) {
         console.log("➕ Creating new patient...");
         const patientRes = await axios.post(
           `${API_URL}/patients/`,
@@ -592,16 +633,23 @@ const NewRequestPage = () => {
             last_name: patient.lastName,
             dob: patient.dob || null,
             gender: patient.gender || null,
+            phone: patient.phone || null,
+            email: patient.email || null,
+            address: patient.address || null,
             facility: patient.facility || null,
             funding: patient.funding || null,
             member_number: patient.memberNumber || null,
             member_suffix: patient.memberSuffix || null,
+            relationship: patient.relationship || null,
+            principal: patient.principal ?? true,
             doctor_name: patient.doctorName || null,
+            ah_foz: patient.ahFoz || null,
             clinical_data: patient.clinicalData || null,
           },
           { headers }
         );
         patient_id = patientRes.data.id;
+        saveStats.patientSaved = true;
         console.log("✅ New patient created with ID:", patient_id);
       }
 
@@ -609,31 +657,11 @@ const NewRequestPage = () => {
         throw new Error("Unable to determine patient ID for saving");
       }
 
-      // 2️⃣ Update patient info for the found patient record
-      console.log("📝 Updating patient info for ID:", patient_id);
-      const updatePatientRes = await axios.put(
-        `${API_URL}/patients/${patient_id}`,
-        {
-          first_name: patient.firstName,
-          last_name: patient.lastName,
-          dob: patient.dob || null,
-          gender: patient.gender || null,
-          facility: patient.facility || null,
-          funding: patient.funding || null,
-          member_number: patient.memberNumber || null,
-          member_suffix: patient.memberSuffix || null,
-          doctor_name: patient.doctorName || null,
-          clinical_data: patient.clinicalData || null,
-        },
-        { headers }
-      );
-      console.log("✅ Patient info saved:", updatePatientRes.data.id);
-      saveStats.patientSaved = true;
-
       setPatientId(patient_id);
 
       let lab_request_id = requestId;
       let createdNewRequest = false;
+      let testsToSave = [];
 
       if (selectedTests.length > 0) {
         // 3️⃣ Ensure there is a lab request for this patient
@@ -673,7 +701,6 @@ const NewRequestPage = () => {
         setSelectedRequest((prev) => prev?.id === lab_request_id ? prev : { id: lab_request_id, patient_id });
 
         // 4️⃣ Save lab results - different behavior for auto vs manual save
-        let testsToSave;
         if (auto) {
           // For auto-save: save ALL selected tests (even empty ones) so they appear in other tabs
           testsToSave = selectedTests;
@@ -724,14 +751,6 @@ const NewRequestPage = () => {
         console.log("ℹ️ No tests selected - patient-only save");
       }
 
-      // 5️⃣ Refresh requests list and verify saves
-      console.log("🔄 Refreshing requests list...");
-      const res = await axios.get(`${API_URL}/lab-requests/`, {
-        headers,
-      });
-      setRequests(res.data || []);
-      console.log("✅ Requests list refreshed, total requests:", res.data?.length || 0);
-
       // Show comprehensive success message
       const hasMeaningfulData = hasPatientFormData() || (auto ? selectedTests.length > 0 : testsToSave?.length > 0);
       if (hasMeaningfulData) {
@@ -775,21 +794,48 @@ const NewRequestPage = () => {
       }
       const headers = { Authorization: `Bearer ${token}` };
 
-      console.log("🔍 Searching for:", safeQuery);
-      
-      // 1️⃣ Search patient
-      const patientRes = await axios.get(`${API_URL}/patients/search/`, { params: { query: safeQuery }, headers });
-
-      console.log("✅ Search response:", patientRes.data);
+      setSearching(true);
+      const patientRes = await axios.get(`${API_URL}/patients/search/`, {
+        params: { query: safeQuery },
+        headers,
+      });
 
       if (!Array.isArray(patientRes.data) || patientRes.data.length === 0) {
         setSnack({ open: true, message: "Patient not found — you can create a new one", severity: "info" });
         return;
       }
 
-      const patientItem = patientRes.data[0];
+      setSearchMatches(patientRes.data);
+      setSearchDialogOpen(true);
+    } catch (error) {
+      console.error("❌ Search failed:", error);
+      console.error("Response data:", error.response?.data);
+      console.error("Response status:", error.response?.status);
+      console.error("Error message:", error.message);
 
-      // 2️⃣ Set patient info FIRST
+      // Provide specific error messages based on response
+      let errorMsg = "Failed to retrieve patient data";
+      if (error.response?.status === 401) {
+        errorMsg = "Authentication failed. Please login again.";
+      } else if (error.response?.status === 422) {
+        errorMsg = "Invalid search query. Please enter a valid name.";
+      } else if (error.response?.data?.detail) {
+        errorMsg = `Search error: ${error.response.data.detail}`;
+      }
+
+      setSnack({ open: true, message: errorMsg, severity: "error" });
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSelectPatientVisit = async (patientItem, visit = null) => {
+    setLoadingPatient(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Not authenticated. Please login.");
+      const headers = { Authorization: `Bearer ${token}` };
+
       setPatient({
         lastName: patientItem.last_name ?? "",
         firstName: patientItem.first_name ?? "",
@@ -809,134 +855,123 @@ const NewRequestPage = () => {
         clinicalData: patientItem.clinical_data ?? "",
       });
       setPatientId(patientItem.id);
+      setRequestRef(null);
+      setLabResults([]);
+      setSelectedTests([]);
 
-      // 3️⃣ Fetch ALL lab requests
-      const labReqRes = await axios.get(`${API_URL}/lab-requests/`, { params: { patient_id: patientItem.id }, headers });
-
-      if (!Array.isArray(labReqRes.data) || labReqRes.data.length === 0) {
-        // No lab requests yet — still valid
+      if (!visit) {
         setRequestId(null);
-        setSelectedTests([]);
-        setLabResults([]);
+        setSelectedRequest(null);
+        setSampleDate(dayjs().format("YYYY-MM-DD"));
         setTab(0);
+        setSearchDialogOpen(false);
+        setSnack({
+          open: true,
+          message: `Patient selected: ${patientItem.first_name} ${patientItem.last_name}`,
+          severity: "success",
+        });
         return;
       }
 
-      // Use the currently saved request if it belongs to the same patient and still exists
-      const savedSelectedRequestRaw = localStorage.getItem("newRequest_selectedRequest");
-      const savedSelectedTestsRaw = localStorage.getItem("newRequest_selectedTests");
-      const savedSelReq = savedSelectedRequestRaw ? JSON.parse(savedSelectedRequestRaw) : null;
-      const savedTestsArray = savedSelectedTestsRaw ? normalizeSelectedTests(JSON.parse(savedSelectedTestsRaw)) : null;
-
-      let requestToLoad = labReqRes.data.at(-1);
-      if (savedSelReq?.patient_id === patientItem.id) {
-        const sameRequest = labReqRes.data.find((r) => r.id === savedSelReq.id);
-        if (sameRequest) {
-          requestToLoad = sameRequest;
-        }
+      const requestIdValue = Number(visit.id);
+      if (!Number.isInteger(requestIdValue)) {
+        throw new Error("The selected visit has an invalid request ID.");
       }
 
-      setRequestId(requestToLoad.id);
-      setSelectedRequest(requestToLoad);
-      setSampleDate(requestToLoad.sample_date ?? "");
+      setRequestId(requestIdValue);
+      setSelectedRequest({ ...visit, id: requestIdValue, patient_id: patientItem.id });
+      setSampleDate(
+        visit.sample_date ?? visit.created_at?.slice(0, 10) ?? dayjs().format("YYYY-MM-DD")
+      );
 
-      const labResRes = await axios.get(`${API_URL}/lab-requests/${requestToLoad.id}/results/`, { headers });
-      const results = Array.isArray(labResRes.data) ? labResRes.data : [];
+      const resultsResponse = await axios.get(
+        `${API_URL}/lab-requests/${requestIdValue}/results/`,
+        { headers }
+      );
+      const results = Array.isArray(resultsResponse.data) ? resultsResponse.data : [];
       setLabResults(results);
 
-      const usePersistedSelection = savedSelReq?.id === requestToLoad.id && Array.isArray(savedTestsArray) && savedTestsArray.length > 0;
+      const savedSelectedRequestRaw = localStorage.getItem("newRequest_selectedRequest");
+      const savedSelectedTestsRaw = localStorage.getItem("newRequest_selectedTests");
+      const savedSelectedRequest = savedSelectedRequestRaw
+        ? JSON.parse(savedSelectedRequestRaw)
+        : null;
+      const savedTests = savedSelectedTestsRaw
+        ? normalizeSelectedTests(JSON.parse(savedSelectedTestsRaw))
+        : [];
+      const usePersistedSelection =
+        savedSelectedRequest?.id === requestIdValue &&
+        Array.isArray(savedTests) &&
+        savedTests.length > 0;
+
       if (usePersistedSelection) {
-        setSelectedTests(savedTestsArray);
+        setSelectedTests(savedTests);
         setTab(results.length > 0 ? 2 : 1);
       } else if (results.length > 0) {
-        const loadedTests = results.map((r) => {
-          const name = normalizeTestName(r.test_name);
+        const loadedTests = results.map((result) => {
+          const name = normalizeTestName(result.test_name);
           return {
-            id: r.lab_test_id,
+            id: result.lab_test_id ?? result.id,
             name,
             category: getTestCategory(name),
-            result: r.results,
-            unit: r.unit,
-            refRange: r.ref_range,
-            flag: r.flag,
-            comment: r.comment,
+            result: result.results ?? result.test_result ?? result.result ?? "",
+            unit: result.unit ?? result.test_unit ?? "",
+            refRange: result.ref_range ?? result.refRange ?? "",
+            flag: result.flag ?? "",
+            comment: result.comment ?? "",
           };
         });
-
-        console.log("🔍 DEBUG: Loaded tests from search:", loadedTests.map(t => ({ name: t.name, category: t.category })));
-
-        // 🔧 FIX: If any FBC test is present, ensure Monocytes and Monocytes (%) are included
-        const hasFBCTest = loadedTests.some((t) => t.category === "Full Blood Count (FBC)");
-        console.log("🔍 DEBUG: Has FBC test?", hasFBCTest);
-        
-        let testsToSet = loadedTests;
-
-        if (hasFBCTest) {
-          const normalizedLoaded = new Set(
-            loadedTests.map((t) =>
-              String(t.name || "").toLowerCase().replace(/\s+/g, "").replace(/[()%]/g, "")
-            )
-          );
-
-          console.log("🔍 DEBUG: Normalized loaded tests:", Array.from(normalizedLoaded));
-
-          // Ensure these critical FBC tests are present
-          const missingFBC = [];
-          const criticalFBCTests = [
-            { name: "Monocytes (%)", id: 999901 },
-            { name: "Monocytes", id: 999902 },
-          ];
-
-          criticalFBCTests.forEach((fbcTest) => {
-            const normKey = String(fbcTest.name)
-              .toLowerCase()
-              .replace(/\s+/g, "")
-              .replace(/[()%]/g, "");
-            console.log("🔍 DEBUG: Checking FBC test:", fbcTest.name, "normKey:", normKey, "exists?", normalizedLoaded.has(normKey));
-            
-            if (!normalizedLoaded.has(normKey)) {
-              missingFBC.push({
-                ...fbcTest,
+        const hasFBCTest = loadedTests.some(
+          (test) => test.category === "Full Blood Count (FBC)"
+        );
+        const normalizedNames = new Set(
+          loadedTests.map((test) =>
+            String(test.name || "").toLowerCase().replace(/\s+/g, "").replace(/[()%]/g, "")
+          )
+        );
+        const requiredFbcTests = [
+          { name: "Monocytes (%)", id: 999901 },
+          { name: "Monocytes", id: 999902 },
+        ];
+        const missingFbcTests = hasFBCTest
+          ? requiredFbcTests
+              .filter((test) => {
+                const key = test.name.toLowerCase().replace(/\s+/g, "").replace(/[()%]/g, "");
+                return !normalizedNames.has(key);
+              })
+              .map((test) => ({
+                ...test,
                 category: "Full Blood Count (FBC)",
                 result: "",
                 unit: "",
                 refRange: "",
                 flag: "",
                 comment: "",
-              });
-            }
-          });
+              }))
+          : [];
 
-          console.log("🔍 DEBUG: Missing FBC tests injected:", missingFBC.map(t => t.name));
-          testsToSet = [...loadedTests, ...missingFBC];
-        }
-
-        console.log("🔍 DEBUG: Tests to set before normalize:", testsToSet.map(t => ({ name: t.name, category: t.category })));
-        setSelectedTests(normalizeSelectedTests(testsToSet));
+        setSelectedTests(normalizeSelectedTests([...loadedTests, ...missingFbcTests]));
         setTab(2);
       } else {
         setSelectedTests([]);
-        setTab(1); // Go to Test Request tab to select tests first
+        setTab(1);
       }
 
-      setSnack({ open: true, message: `Patient found: ${patientItem.first_name} ${patientItem.last_name}`, severity: "success" });
+      setSearchDialogOpen(false);
+      setSnack({
+        open: true,
+        message: `Loaded visit #${requestIdValue} for ${patientItem.first_name} ${patientItem.last_name}`,
+        severity: "success",
+      });
     } catch (error) {
-      console.error("❌ Search failed:", error);
-      console.error("Response data:", error.response?.data);
-      console.error("Response status:", error.response?.status);
-      console.error("Error message:", error.message);
-      
-      // Provide specific error messages based on response
-      let errorMsg = "Failed to retrieve patient data";
-      if (error.response?.status === 401) {
-        errorMsg = "Authentication failed. Please login again.";
-      } else if (error.response?.status === 422) {
-        errorMsg = "Invalid search query. Please enter a valid name.";
-      } else if (error.response?.data?.detail) {
-        errorMsg = `Search error: ${error.response.data.detail}`;
-      }
-      
-      setSnack({ open: true, message: errorMsg, severity: "error" });
+      console.error("Could not load selected patient visit", error);
+      setSnack({
+        open: true,
+        message: error.response?.data?.detail || error.message || "Could not load the selected visit.",
+        severity: "error",
+      });
+    } finally {
+      setLoadingPatient(false);
     }
   };
 
@@ -1007,10 +1042,6 @@ const NewRequestPage = () => {
         console.log("✅ Lab results updated for all selected tests");
       }
 
-      // 3️⃣ Refresh requests for this patient
-      const res = await axios.get(`${API_URL}/lab-requests/`, { params: { patient_id: patientId }, headers });
-      setRequests(res.data || []);
-
       setSnack({ open: true, message: "Patient and lab results updated successfully ✅", severity: "success" });
     } catch (err) {
       console.error("Update failed:", err.response?.data || err.message);
@@ -1019,7 +1050,7 @@ const NewRequestPage = () => {
   };
 
   return (
-    <Box sx={{ p: 2, m: -8, background: "#f5f6f8", minHeight: "100vh", maxWidth: 1000 }}>
+    <Box sx={{ minHeight: "calc(100vh - 64px)" }}>
       {/* Toolbar */}
       <Paper sx={{ p: 2, mb: 3, borderRadius: 2, boxShadow: 3 }}>
         <RequestToolbar
@@ -1033,6 +1064,7 @@ const NewRequestPage = () => {
           saving={saving}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          searching={searching}
         />
       </Paper>
 
@@ -1094,6 +1126,9 @@ const NewRequestPage = () => {
                   </Grid>
                   <Grid item xs={12} md={4}>
                     <TextField label="Email" name="email" value={patient.email} onChange={handlePatientChange} fullWidth />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField label="Address" name="address" value={patient.address} onChange={handlePatientChange} fullWidth />
                   </Grid>
 
                   <Grid item xs={12} md={3}>
@@ -1182,6 +1217,118 @@ const NewRequestPage = () => {
             )}
           </Box>
       </Paper>
+
+      <Dialog
+        open={searchDialogOpen}
+        onClose={() => !loadingPatient && setSearchDialogOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Choose the patient and visit to review</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Matching names can belong to different people. Check the patient ID and details,
+            then choose the visit by its date and request ID.
+          </Typography>
+          <Stack spacing={2}>
+            {searchMatches.map((match) => {
+              const visits = [...(match.lab_requests || [])].sort(
+                (a, b) => new Date(b.created_at) - new Date(a.created_at)
+              );
+              return (
+                <Paper key={match.id} variant="outlined" sx={{ p: 2, boxShadow: "none" }}>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    alignItems={{ sm: "center" }}
+                    justifyContent="space-between"
+                  >
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight={700}>
+                        {match.first_name} {match.last_name}
+                      </Typography>
+                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 0.5 }}>
+                        <Chip size="small" variant="outlined" label={`Patient #${match.id}`} />
+                        {match.dob && (
+                          <Chip size="small" variant="outlined" label={`DOB: ${match.dob}`} />
+                        )}
+                        {match.gender && (
+                          <Chip size="small" variant="outlined" label={match.gender} />
+                        )}
+                        {match.facility && (
+                          <Chip size="small" variant="outlined" label={match.facility} />
+                        )}
+                        {match.member_number && (
+                          <Chip size="small" variant="outlined" label={`Member #${match.member_number}`} />
+                        )}
+                      </Stack>
+                    </Box>
+                    {visits.length === 0 && (
+                      <Button
+                        variant="outlined"
+                        disabled={loadingPatient}
+                        onClick={() => handleSelectPatientVisit(match)}
+                      >
+                        Select patient
+                      </Button>
+                    )}
+                  </Stack>
+                  {visits.length > 0 && (
+                    <Box sx={{ mt: 1.5 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {visits.length} {visits.length === 1 ? "visit" : "visits"} — select the record to review
+                      </Typography>
+                      <Stack spacing={1} sx={{ mt: 1 }}>
+                        {visits.map((visit) => (
+                          <Paper
+                            key={visit.id}
+                            variant="outlined"
+                            sx={{
+                              p: 1.25,
+                              boxShadow: "none",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 1,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {dayjs(visit.created_at).isValid()
+                                  ? dayjs(visit.created_at).format("DD MMM YYYY, HH:mm")
+                                  : "Visit date unavailable"}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Request #{visit.id}
+                                {visit.status ? ` · ${visit.status}` : ""}
+                              </Typography>
+                            </Box>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              disabled={loadingPatient}
+                              onClick={() => handleSelectPatientVisit(match, visit)}
+                            >
+                              Review this record
+                            </Button>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+                </Paper>
+              );
+            })}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          {loadingPatient && <CircularProgress size={22} sx={{ mr: 1 }} />}
+          <Button onClick={() => setSearchDialogOpen(false)} disabled={loadingPatient}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar open={snack.open} autoHideDuration={4000} onClose={() => setSnack((s) => ({ ...s, open: false }))}>
         <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.severity} sx={{ width: '100%' }}>

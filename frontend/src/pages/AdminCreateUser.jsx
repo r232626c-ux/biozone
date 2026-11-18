@@ -118,8 +118,9 @@ export default function AdminCreateUser() {
   // MAIN FORM
   // ================================
   return (
-    <Container maxWidth="sm" sx={{ mt: 10, m: 38 }}>
-      <Paper sx={{ p: 4, boxShadow: 3 }}>
+    <Box className="auth-page">
+      <Container maxWidth="sm" sx={{ display: "flex", justifyContent: "center" }}>
+        <Paper className="auth-card" elevation={0}>
         <Typography variant="h5" gutterBottom textAlign="center">
           Admin – Create New User
         </Typography>
@@ -194,7 +195,8 @@ export default function AdminCreateUser() {
             Back to Login
           </Button>
         </Box>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

@@ -27,6 +27,7 @@ const RequestToolbar = ({
   saving,
   searchQuery,
   setSearchQuery,
+  searching,
 }) => {
   return (
     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
@@ -71,14 +72,25 @@ const RequestToolbar = ({
       <Box sx={{ display: "flex", gap: 1 }}>
         <TextField
           size="small"
-          placeholder="Search patient name..."
+          placeholder="Search first or last name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onSearch();
+            }
+          }}
           sx={{ minWidth: 240 }}
         />
 
-        <Button startIcon={<SearchIcon />} variant="outlined" onClick={onSearch}>
-          Search
+        <Button
+          startIcon={searching ? null : <SearchIcon />}
+          variant="outlined"
+          onClick={onSearch}
+          disabled={searching}
+        >
+          {searching ? "Searching..." : "Search"}
         </Button>
       </Box>
 

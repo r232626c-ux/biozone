@@ -26,7 +26,8 @@ DEFAULT_LAB_TESTS = {
         "ESR", "INR", "D-Dimer"
     ],
     "Chemistry Tests": [
-        "Blood Glucose (RBS)", "Uric Acid", "Total Cholesterol",
+        "Blood Glucose (RBS)", "Fasting Blood Sugar", "Serum Iron Levels",
+        "Serum Amylase", "Uric Acid", "Total Cholesterol",
         "HDL Cholesterol", "LDL Cholesterol", "VLDL Cholesterol",
         "Triglycerides", "Urea", "ALT", "AST", "LFT", "GGT",
         "Total Bilirubin", "Sodium", "Potassium", "Bicarbonate",

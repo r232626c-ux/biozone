@@ -16,7 +16,7 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    print("⚠️  WARNING: DATABASE_URL not found in environment variables!")
+    print("WARNING: DATABASE_URL not found in environment variables!")
     print("   Falling back to SQLite database. Data may not persist properly.")
     # Use a local sqlite file in user's app data directory for persistence
     import os
@@ -25,15 +25,15 @@ if not DATABASE_URL:
     sqlite_path = app_data_dir / "biozone.db"
     # Use SQLAlchemy async sqlite driver
     DATABASE_URL = f"sqlite+aiosqlite:///{sqlite_path.as_posix()}"
-    print(f"📁 Using SQLite database: {sqlite_path}")
+    print(f"Using SQLite database: {sqlite_path}")
 elif "postgresql" in DATABASE_URL.lower():
-    print("✅ Using PostgreSQL database")
+    print("Using PostgreSQL database")
 elif "sqlite" in DATABASE_URL.lower():
-    print("⚠️  WARNING: Using SQLite database - ensure data persistence!")
+    print("WARNING: Using SQLite database - ensure data persistence!")
 else:
-    print(f"❓ Unknown database type in DATABASE_URL: {DATABASE_URL}")
+    print(f"Unknown database type in DATABASE_URL: {DATABASE_URL}")
 
-print(f"🗄️  Database URL: {DATABASE_URL.replace('password', '****') if 'password' in DATABASE_URL else DATABASE_URL}")
+print(f"Database URL: {DATABASE_URL.replace('password', '****') if 'password' in DATABASE_URL else DATABASE_URL}")
 
 # Create async engine
 engine = create_async_engine(

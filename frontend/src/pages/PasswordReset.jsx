@@ -1,11 +1,10 @@
 import { useState } from "react";
 import {
-  Container,
+  Box,
   Paper,
   Typography,
   TextField,
   Button,
-  Box,
   Alert,
 } from "@mui/material";
 import axios from "axios";
@@ -43,9 +42,9 @@ export default function PasswordReset({ onBack }) {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 10, m: 38 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h6" textAlign="center">
+    <Box className="auth-page">
+      <Paper className="auth-card" elevation={0}>
+        <Typography variant="h5" textAlign="center">
           Password Reset
         </Typography>
 
@@ -95,6 +94,6 @@ export default function PasswordReset({ onBack }) {
           </Button>
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 }

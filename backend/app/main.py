@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
 from app import models
-from sqlalchemy import or_
+from sqlalchemy import and_, inspect, or_, text
 from fastapi import Request
 from sqlalchemy import select
 from typing import List
@@ -19,15 +19,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 from passlib.context import CryptContext
 import app.schemas as schemas
-from starlette.middleware.base import BaseHTTPMiddleware
-import asyncio
 from datetime import datetime, timedelta
+import logging
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, JSON, ForeignKey, DateTime
 from jose import jwt
 import requests
 from app.schemas import LabTestOut
 from app import crud
-from app.database import async_session, init_db, get_db, Base, engine
+from app.database import async_session, init_db, get_db, engine
 from app.crud import (
     create_user, authenticate_user, create_patient, get_patient, update_patient,
     create_lab_test, get_lab_test, create_lab_request, get_lab_request,
@@ -40,7 +39,8 @@ from app.schemas import (
     UserCreate, PatientCreate, PatientUpdate, LabTestCreate, 
     LabRequestCreate, LabResultCreate,  UserOut, PatientOut, LabRequestOut, PasswordResetRequest,
     PasswordResetConfirm,
-    AdminCreateUser, AuditLogOut, LabRequestUpdate
+    PasswordChangeRequest,
+    AdminCreateUser, AuditLogOut, EmailSentAuditEvent, LabRequestUpdate
 
 )
 from app.models import User, LabTest, Patient, SystemSettings, PaymentCode, LabRequest, LabResult # Ensure you have models defined
@@ -61,6 +61,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI(title="Biozone Lab API")
+logger = logging.getLogger(__name__)
 
 # CORS - include local defaults and optional deployed frontend origins.
 origins = [
@@ -80,6 +81,7 @@ if frontend_origins_env.strip():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"^https?://(?:localhost|127\.0\.0\.1|192\.168\.1\.\d{1,3})(?::\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -161,9 +163,41 @@ def evaluate_result(test_name: str, value: float):
 
 @app.on_event("startup")
 async def on_startup():
-    # Create tables
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(models.Base.metadata.create_all)
+        user_columns = await conn.run_sync(
+            lambda sync_conn: {
+                column["name"] for column in inspect(sync_conn).get_columns("users")
+            }
+        )
+        if "must_change_password" not in user_columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE users ADD COLUMN "
+                    "must_change_password BOOLEAN NOT NULL DEFAULT FALSE"
+                )
+            )
+        patient_columns = await conn.run_sync(
+            lambda sync_conn: {
+                column["name"] for column in inspect(sync_conn).get_columns("patients")
+            }
+        )
+        patient_additions = {
+            "phone": "VARCHAR",
+            "email": "VARCHAR",
+            "address": "VARCHAR",
+            "relationship": "VARCHAR",
+            "principal": "BOOLEAN NOT NULL DEFAULT TRUE",
+            "ah_foz": "VARCHAR",
+        }
+        for column_name, column_definition in patient_additions.items():
+            if column_name not in patient_columns:
+                await conn.execute(
+                    text(
+                        f"ALTER TABLE patients ADD COLUMN "
+                        f"{column_name} {column_definition}"
+                    )
+                )
 
     # Initialize admin and lab tests
     async with async_session() as db:
@@ -177,6 +211,16 @@ async def init_lab_tests(db: AsyncSession):
     existing = result.scalars().first()
 
     if existing:
+        misplaced_tests = await db.execute(
+            select(LabTest).where(
+                LabTest.name.in_(
+                    ["Fasting Blood Sugar", "Serum Iron Levels", "Serum Amylase"]
+                )
+            )
+        )
+        for test in misplaced_tests.scalars():
+            test.category = "Chemistry Tests"
+        await db.commit()
         return  # Database already has tests
 
     # If empty, insert default tests
@@ -204,8 +248,8 @@ async def init_lab_tests(db: AsyncSession):
     ],
 
     "Hematology": [
-         "PDW", "Blood Group","Reticulocyte Count", "ESR", "INR", "D-Dimer", "Fasting Blood Sugar",
-         "Folic Acid", "Lactic acid", "Serum Amylase", "Serum Iron Levels", "Retic Count",
+         "PDW", "Blood Group","Reticulocyte Count", "ESR", "INR", "D-Dimer",
+         "Folic Acid", "Lactic acid", "Retic Count",
          
     ],
 
@@ -305,7 +349,7 @@ async def init_lab_tests(db: AsyncSession):
 
 
     "Chemistry Tests": [
-        "Blood Glucose (RBS)", 
+        "Blood Glucose (RBS)", "Fasting Blood Sugar", "Serum Iron Levels", "Serum Amylase",
          "Amylase", "Lipase",
         "Iron Studies", "Ferritin", "Transferrin", "Vitamin B12", "Folate"
     ],
@@ -470,7 +514,7 @@ async def init_lab_tests(db: AsyncSession):
     ],
 
     "Allergy Tests": [
-        "Food Allergy Panel", "Environmental Allergy Panel",
+        "Allergy", "Food Allergy Panel", "Environmental Allergy Panel",
         "Drug Allergy Panel", "Egg Allergy", "Milk Allergy",
         "Fish Allergy", "Nuts Allergy", "Pollen Allergy", "Dust Mite Allergy",
         "Protia Allergy Test"
@@ -542,7 +586,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
 ):
     if not token:
         raise HTTPException(status_code=401, detail="Token missing")
@@ -562,6 +608,14 @@ async def get_current_user(
     user = result.scalars().first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if user.must_change_password and not request.url.path.rstrip("/").endswith(
+        "/auth/change-password"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You must change your password before continuing",
+        )
+    request.state.current_user = user
     return user
 
 
@@ -646,7 +700,38 @@ async def login(
     except Exception as e:
         print(f"Failed to log audit: {e}")
     
-    return {"access_token": token, "token_type": "bearer", "role": user.role, "username": user.username}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "role": user.role,
+        "username": user.username,
+        "must_change_password": user.must_change_password,
+    }
+
+
+@app.post("/auth/change-password")
+async def change_password(
+    data: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.verify_password(data.current_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    if data.current_password == data.new_password:
+        raise HTTPException(
+            status_code=400,
+            detail="Choose a password different from your temporary password",
+        )
+    if len(data.new_password) < 12 or len(data.new_password) > 72:
+        raise HTTPException(
+            status_code=422,
+            detail="Password must be between 12 and 72 characters",
+        )
+
+    current_user.set_password(data.new_password)
+    current_user.must_change_password = False
+    await db.commit()
+    return {"message": "Password changed successfully"}
 
 # ==============================
 # USER ROUTES
@@ -862,45 +947,165 @@ async def export_single_patient(
     return {"patient": patient}
 
 
-@app.get("/api/audit-logs")
-async def read_audit_logs(db: AsyncSession = Depends(get_db)):
+@app.get(
+    "/api/audit-logs",
+    response_model=List[AuditLogOut],
+)
+async def read_audit_logs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(strict_role_required("Admin", "Super Admin")),
+):
     logs = await get_audit_logs(db)
     return logs
 
+@app.post("/api/audit-logs/email-sent", status_code=201)
+async def record_email_sent_event(
+    event: EmailSentAuditEvent,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not event.recipients or len(event.recipients) > 500:
+        raise HTTPException(
+            status_code=422,
+            detail="Provide between 1 and 500 email recipients.",
+        )
+
+    await crud.create_audit_log(
+        db=db,
+        role=current_user.role,
+        action="SEND EMAIL",
+        details=(
+            "Outlook message accepted by Microsoft for recipients: "
+            + ", ".join(str(address) for address in event.recipients)
+        ),
+        ip_address=request.client.host if request.client else None,
+        user_id=current_user.id,
+        username=current_user.username,
+    )
+    return {"message": "Email activity recorded."}
+
+
+@app.post("/api/audit-logs/email-compose", status_code=201)
+async def record_email_compose_event(
+    event: EmailSentAuditEvent,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not event.recipients or len(event.recipients) > 500:
+        raise HTTPException(
+            status_code=422,
+            detail="Provide between 1 and 500 email recipients.",
+        )
+
+    await crud.create_audit_log(
+        db=db,
+        role=current_user.role,
+        action="OPEN EMAIL DRAFT",
+        details=(
+            "Requested handoff to the default email app for recipients: "
+            + ", ".join(str(address) for address in event.recipients)
+            + ". Delivery is not verified."
+        ),
+        ip_address=request.client.host if request.client else None,
+        user_id=current_user.id,
+        username=current_user.username,
+    )
+    return {"message": "Email draft activity recorded."}
+
+
+_AUDIT_MANUAL_ENDPOINTS = {
+    ("POST", "/token"),
+    ("POST", "/users/"),
+    ("POST", "/admin/create-user"),
+    ("POST", "/patients/"),
+    ("PUT", "/patients/{patient_id}"),
+    ("POST", "/lab-tests/add"),
+    ("DELETE", "/lab-tests/{test_id}"),
+    ("POST", "/lab-requests/"),
+    ("POST", "/lab-results/"),
+    ("POST", "/lab-results/save"),
+    ("PUT", "/system-settings/"),
+    ("POST", "/system-settings/verify-payment/"),
+    ("PUT", "/admin/permissions/"),
+}
+_AUDIT_IGNORED_ROUTES = {
+    "/",
+    "/health",
+    "/docs",
+    "/docs/oauth2-redirect",
+    "/openapi.json",
+    "/redoc",
+    "/{full_path:path}",
+}
+
+
+async def _record_request_audit(
+    request: Request,
+    status_code: int,
+) -> None:
+    method = request.method.upper()
+    route = request.scope.get("route")
+    route_path = getattr(route, "path", request.url.path)
+    if (
+        method not in {"GET", "POST", "PUT", "PATCH", "DELETE"}
+        or route_path in _AUDIT_IGNORED_ROUTES
+        or (method, route_path) == ("POST", "/token")
+        or (
+            status_code < 400
+            and route_path
+            in {
+                "/api/audit-logs",
+                "/api/audit-logs/email-sent",
+                "/api/audit-logs/email-compose",
+            }
+        )
+        or (status_code < 400 and (method, route_path) in _AUDIT_MANUAL_ENDPOINTS)
+    ):
+        return
+
+    actor = getattr(request.state, "current_user", None)
+    authorization = request.headers.get("Authorization", "")
+    scheme, _, token = authorization.partition(" ")
+    actor_name = None
+    if actor is None and scheme.lower() == "bearer" and token:
+        try:
+            claims = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            actor_name = claims.get("sub")
+        except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError):
+            pass
+
+    details = f"path={request.url.path}; status={status_code}"
+    try:
+        async with async_session() as audit_db:
+            if actor is None and actor_name:
+                result = await audit_db.execute(
+                    select(User).where(User.username == actor_name)
+                )
+                actor = result.scalar_one_or_none()
+            await crud.create_audit_log(
+                db=audit_db,
+                role=actor.role if actor else "Unknown",
+                action=f"{method} {route_path}",
+                details=details,
+                ip_address=request.client.host if request.client else None,
+                user_id=actor.id if actor else None,
+                username=actor.username if actor else None,
+            )
+    except Exception:
+        logger.exception("Could not write audit event for %s %s", method, route_path)
+
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    response = await call_next(request)
-    return response
-
-class AuditLogMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Only log POST, PUT, DELETE requests
-        if request.method in ("POST", "PUT", "DELETE"):
-            try:
-                # Get role from headers / auth (replace with real auth logic)
-                role = request.headers.get("x-role", "Unknown")  
-
-                # Path and method
-                action = f"{request.method} {request.url.path}"
-
-                # IP address
-                ip_address = request.client.host
-
-                # Get body as string
-                body_bytes = await request.body()
-                details = body_bytes.decode("utf-8") if body_bytes else None
-
-                # TODO: Implement audit logging if needed
-                # Use a separate async task to avoid blocking response
-                # async def log_task():
-                #     async with get_db() as db:
-                #         await create_audit_log(db=db, role=role, action=action, details=details, ip_address=ip_address)
-                # asyncio.create_task(log_task())
-            except Exception as e:
-                print(f"Failed to log audit: {e}")
-
+    try:
         response = await call_next(request)
-        return response
+    except Exception:
+        await _record_request_audit(request, 500)
+        raise
+    await _record_request_audit(request, response.status_code)
+    return response
 
 # ==============================
 # PATIENT ROUTES
@@ -935,7 +1140,7 @@ async def create_patient_route(
 async def get_patient_route(
     patient_id: int, 
     db: AsyncSession = Depends(get_db), 
-    user=Depends(role_required("Admin", "Lab Technician"))
+    user=Depends(role_required("Admin", "Lab Technician", "Super Admin"))
 ):
     patient = await crud.get_patient(db, patient_id)
     if not patient:
@@ -982,7 +1187,7 @@ async def list_patients(
     result = await db.execute(select(Patient))
     return result.scalars().all()
 
-@app.get("/patients/search/", response_model=list[PatientOut])
+@app.get("/patients/search/", response_model=list[schemas.PatientSearchOut])
 async def search_patients_route(
     query: str = Query(..., min_length=1),
     db: AsyncSession = Depends(get_db),
@@ -992,22 +1197,29 @@ async def search_patients_route(
     if not tokens:
         raise HTTPException(status_code=400, detail="Invalid search query")
 
-    conditions = []
+    token_conditions = []
     for token in tokens:
         token_q = f"%{token}%"
-        conditions.extend([
+        token_conditions.append(or_(
             Patient.first_name.ilike(token_q),
             Patient.last_name.ilike(token_q),
             Patient.member_number.ilike(token_q),
-        ])
+        ))
 
     result = await db.execute(
         select(Patient)
-        .where(or_(*conditions))
+        .where(and_(*token_conditions))
         .options(selectinload(Patient.lab_requests))
+        .order_by(Patient.last_name, Patient.first_name, Patient.id)
     )
 
-    return result.scalars().unique().all()
+    patients = result.scalars().unique().all()
+    for patient in patients:
+        patient.lab_requests.sort(
+            key=lambda visit: (visit.created_at is not None, visit.created_at),
+            reverse=True,
+        )
+    return patients
 
 
 # ==============================
@@ -1017,10 +1229,22 @@ async def search_patients_route(
 async def add_lab_test_route(
     lab_test: LabTestCreate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(strict_role_required("admin")),
     request: Request = None
 ):
-    new_test = LabTest(name=lab_test.name, category=lab_test.category)
+    name = lab_test.name.strip()
+    category = lab_test.category.strip()
+
+    if not name or not category:
+        raise HTTPException(status_code=400, detail="Lab test name and category are required")
+
+    existing = await db.execute(
+        select(LabTest).where(LabTest.name == name, LabTest.category == category)
+    )
+    if existing.scalars().first():
+        raise HTTPException(status_code=409, detail="Lab test already exists")
+
+    new_test = LabTest(name=name, category=category)
     try:
         db.add(new_test)
         await db.commit()
@@ -1076,7 +1300,7 @@ async def list_lab_requests_route(
 async def delete_lab_test_route(
     test_id: int,
     db: AsyncSession = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(strict_role_required("admin")),
     request: Request = None
 ):
     test = await db.get(LabTest, test_id)
@@ -1187,7 +1411,7 @@ async def update_lab_request_endpoint(
 async def create_lab_result_route(
     payload: LabResultCreate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Lab Technician", "Admin")),
+    user=Depends(role_required("Lab Technician", "Admin", "Super Admin")),
     request: Request = None
 ):
     result_data = await crud.create_lab_result(db, payload)
@@ -1213,11 +1437,44 @@ async def create_lab_result_route(
 async def lab_results_by_request_route(request_id: int, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
     return await crud.get_lab_test_results_by_request(db, request_id)
 
+
+@app.get("/lab-results/", response_model=List[schemas.LabResultListOut])
+async def list_lab_results_route(
+    db: AsyncSession = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    result = await db.execute(
+        select(
+            models.LabResult.id,
+            models.LabResult.patient_id,
+            models.LabResult.lab_test_id,
+            models.LabResult.lab_request_id,
+            models.LabResult.test_name,
+            models.LabResult.results,
+            models.LabResult.unit,
+            models.LabResult.ref_range,
+            models.LabResult.flag,
+            models.LabResult.comment,
+            models.LabResult.created_at,
+            models.LabTest.category.label("category"),
+            models.Patient.first_name.label("patient_first_name"),
+            models.Patient.last_name.label("patient_last_name"),
+            models.LabRequest.created_at.label("request_created_at"),
+            models.LabRequest.status.label("request_status"),
+        )
+        .join(models.Patient, models.Patient.id == models.LabResult.patient_id)
+        .join(models.LabRequest, models.LabRequest.id == models.LabResult.lab_request_id)
+        .outerjoin(models.LabTest, models.LabTest.id == models.LabResult.lab_test_id)
+        .order_by(models.LabResult.created_at.desc(), models.LabResult.id.desc())
+    )
+    return [dict(row._mapping) for row in result.all()]
+
+
 @app.post("/lab-results/save", response_model=schemas.LabResultRead)
 async def save_lab_result(
     payload: schemas.LabResultSave,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Lab Technician", "Admin")),
+    user=Depends(role_required("Lab Technician", "Admin", "Super Admin")),
     request: Request = None
 ):
     result = await crud.create_lab_result(db, payload)
@@ -1246,7 +1503,7 @@ async def update_lab_request_route(
     request_id: int,
     payload: LabRequestUpdate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Admin", "Lab Technician")),
+    user=Depends(role_required("Admin", "Lab Technician", "Super Admin")),
 ):
     request_obj = await db.get(models.LabRequest, request_id)
     if not request_obj:
@@ -1274,7 +1531,7 @@ async def update_lab_request_route(
 async def recalc_lab_request_status(
     request_id: int,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Admin", "Lab Technician"))
+    user=Depends(role_required("Admin", "Lab Technician", "Super Admin"))
 ):
     result = await db.get(models.LabRequest, request_id)
     
@@ -1355,13 +1612,13 @@ async def get_system_settings(db: AsyncSession = Depends(get_db)):
         if not settings:
             # Create default settings if none exist
             settings = SystemSettings(
-                labName="BIOZONE Lab",
-                turnaroundTime="24",
-                enableNotifications=True,
-                maintenanceMode=False,
-                defaultReportFormat="PDF",
-                dataRetentionDays=365,
-                paymentStatus="inactive"
+                labname="BIOZONE Lab",
+                turnaroundtime="24",
+                enablenotifications=True,
+                maintenancemode=False,
+                defaultreportformat="PDF",
+                dataretentiondays=365,
+                paymentstatus="inactive",
             )
             db.add(settings)
             await db.commit()
@@ -1470,8 +1727,8 @@ async def verify_payment(
                 db.add(settings)
             
             now = datetime.utcnow()
-            settings.lastPaymentDate = now
-            settings.paymentStatus = "active"
+            settings.lastpaymentdate = now
+            settings.paymentstatus = "active"
             settings.updated_at = now
             
             await db.commit()
@@ -1485,7 +1742,7 @@ async def verify_payment(
                     db=db,
                     role=current_user.role,
                     action="VERIFY PAYMENT (DB)",
-                    details=f"Code used: {code} (period={period}, license={license_type})",
+                    details=f"Payment code redeemed (period={period}, license={license_type}).",
                     ip_address=ip,
                     user_id=current_user.id,
                     username=current_user.username,
@@ -1496,11 +1753,23 @@ async def verify_payment(
             return schemas.PaymentVerificationResponse(
                 success=True,
                 message=f"Payment verified successfully! ({period} - {license_type}). System unlocked for {SUBSCRIPTION_PERIOD_DAYS} days.",
-                lastPaymentDate=settings.lastPaymentDate
+                lastPaymentDate=settings.lastpaymentdate
             )
         
         # Fall back to config codes if database code not found
         if not is_valid_payment_code(code):
+            try:
+                await crud.create_audit_log(
+                    db=db,
+                    role=current_user.role,
+                    action="VERIFY PAYMENT FAILED",
+                    details="Payment verification rejected an invalid code.",
+                    ip_address=request.client.host if request.client else None,
+                    user_id=current_user.id,
+                    username=current_user.username,
+                )
+            except Exception:
+                logger.exception("Could not audit failed payment verification")
             return schemas.PaymentVerificationResponse(
                 success=False,
                 message="Invalid payment verification code. Please contact your administrator."
@@ -1517,8 +1786,8 @@ async def verify_payment(
             db.add(settings)
         
         now = datetime.utcnow()
-        settings.lastPaymentDate = now
-        settings.paymentStatus = "active"
+        settings.lastpaymentdate = now
+        settings.paymentstatus = "active"
         settings.updated_at = now
         
         await db.commit()
@@ -1531,7 +1800,7 @@ async def verify_payment(
                 db=db,
                 role=current_user.role,
                 action="VERIFY PAYMENT (CONFIG)",
-                details=f"Config code used: {payment_req.code} (license={license_type})",
+                details=f"Payment code redeemed (license={license_type}).",
                 ip_address=ip,
                 user_id=current_user.id,
                 username=current_user.username,
@@ -1542,7 +1811,7 @@ async def verify_payment(
         return schemas.PaymentVerificationResponse(
             success=True,
             message=f"Payment verified successfully! System unlocked for {SUBSCRIPTION_PERIOD_DAYS} days. ({license_type})",
-            lastPaymentDate=settings.lastPaymentDate
+            lastPaymentDate=settings.lastpaymentdate
         )
     except Exception as e:
         print(f"Error verifying payment: {e}")
@@ -1688,7 +1957,7 @@ async def bulk_create_payment_codes(
 @app.get("/admin/permissions/")
 async def get_permissions(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(strict_role_required("Super Admin"))
+    current_user: User = Depends(strict_role_required("Admin", "Super Admin"))
 ):
     """Get all role permissions"""
     try:
@@ -1715,7 +1984,7 @@ async def update_permissions(
     data: schemas.PermissionsUpdate,
     db: AsyncSession = Depends(get_db),
     request: Request = None,
-    current_user: User = Depends(strict_role_required("Super Admin"))
+    current_user: User = Depends(strict_role_required("Admin", "Super Admin"))
 ):
     """Update role permissions"""
     try:

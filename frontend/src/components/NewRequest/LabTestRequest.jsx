@@ -15,9 +15,14 @@ import {
 } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import axios from "axios";
+import { apiClient } from "../../utils/api";
 
-import { API_URL } from "../../utils/api";
+const chemistryTestOrder = [
+  "Blood Glucose (RBS)",
+  "Fasting Blood Sugar",
+  "Serum Iron Levels",
+  "Serum Amylase",
+];
 
 const LabTestRequest = ({ selectedTests, setSelectedTests }) => {
   const [labTests, setLabTests] = useState({});
@@ -30,6 +35,16 @@ const LabTestRequest = ({ selectedTests, setSelectedTests }) => {
 
   const [newTestName, setNewTestName] = useState("");
   const [newTestCategory, setNewTestCategory] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const rawUser = localStorage.getItem("user");
+    const storedRole = localStorage.getItem("role");
+    const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+    const role = parsedUser?.role ?? storedRole ?? "";
+    const normalizedRole = String(role).trim().toLowerCase();
+    setIsAdmin(normalizedRole === "admin" || normalizedRole === "super admin");
+  }, []);
 
   // ==================================================
   // FETCH LAB TESTS
@@ -38,13 +53,25 @@ const LabTestRequest = ({ selectedTests, setSelectedTests }) => {
     const fetchLabTests = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_URL}/lab-tests`);
+        const res = await apiClient.get("/lab-tests");
 
         const grouped = res.data.reduce((acc, test) => {
           if (!acc[test.category]) acc[test.category] = [];
           acc[test.category].push(test);
           return acc;
         }, {});
+
+        const chemistryTests = grouped["Chemistry Tests"];
+        if (chemistryTests) {
+          const order = new Map(chemistryTestOrder.map((name, index) => [name, index]));
+          chemistryTests.sort((a, b) => {
+            const aOrder = order.get(a.name);
+            const bOrder = order.get(b.name);
+            if (aOrder === undefined) return bOrder === undefined ? 0 : 1;
+            if (bOrder === undefined) return -1;
+            return aOrder - bOrder;
+          });
+        }
 
         setLabTests(grouped);
         setAllCategories(Object.keys(grouped));
@@ -103,34 +130,43 @@ const LabTestRequest = ({ selectedTests, setSelectedTests }) => {
   // ADD NEW TEST
   // ==================================================
   const handleAddTest = async () => {
-    if (!newTestName || !newTestCategory) {
+    if (!isAdmin) {
+      alert("Only admins can add lab tests.");
+      return;
+    }
+
+    const trimmedName = newTestName.trim();
+    const trimmedCategory = newTestCategory.trim();
+
+    if (!trimmedName || !trimmedCategory) {
       alert("Fill all fields");
       return;
     }
 
     try {
-      const res = await axios.post(`${API_URL}/lab-tests/add`, {
-        name: newTestName,
-        category: newTestCategory,
+      const res = await apiClient.post("/lab-tests/add", {
+        name: trimmedName,
+        category: trimmedCategory,
       });
 
       const saved = res.data;
 
       setLabTests((prev) => ({
         ...prev,
-        [newTestCategory]: prev[newTestCategory]
-          ? [...prev[newTestCategory], saved]
+        [trimmedCategory]: prev[trimmedCategory]
+          ? [...prev[trimmedCategory], saved]
           : [saved],
       }));
 
-      if (!allCategories.includes(newTestCategory)) {
-        setAllCategories((prev) => [...prev, newTestCategory]);
+      if (!allCategories.includes(trimmedCategory)) {
+        setAllCategories((prev) => [...prev, trimmedCategory]);
       }
 
       setNewTestName("");
       setNewTestCategory("");
-    } catch {
-      alert("Error saving test");
+    } catch (err) {
+      const message = err?.response?.data?.detail || "Error saving test";
+      alert(message);
     }
   };
 
@@ -183,34 +219,40 @@ const LabTestRequest = ({ selectedTests, setSelectedTests }) => {
       </Box>
 
       {/* ADD NEW TEST */}
-      <Box sx={{ display: "flex", gap: 1, mb: 3, flexWrap: "wrap" }}>
-        <TextField
-          label="New Test Name"
-          size="small"
-          value={newTestName}
-          onChange={(e) => setNewTestName(e.target.value)}
-        />
+      {isAdmin ? (
+        <Box sx={{ display: "flex", gap: 1, mb: 3, flexWrap: "wrap" }}>
+          <TextField
+            label="New Test Name"
+            size="small"
+            value={newTestName}
+            onChange={(e) => setNewTestName(e.target.value)}
+          />
 
-        <TextField
-          select
-          label="Category"
-          size="small"
-          sx={{ minWidth: 180 }}
-          value={newTestCategory}
-          onChange={(e) => setNewTestCategory(e.target.value)}
-        >
-          {allCategories.map((cat) => (
-            <MenuItem key={cat} value={cat}>
-              {cat}
-            </MenuItem>
-          ))}
-          <MenuItem value="Other">Other (New Category)</MenuItem>
-        </TextField>
+          <TextField
+            select
+            label="Category"
+            size="small"
+            sx={{ minWidth: 180 }}
+            value={newTestCategory}
+            onChange={(e) => setNewTestCategory(e.target.value)}
+          >
+            {allCategories.map((cat) => (
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
+            ))}
+            <MenuItem value="Other">Other (New Category)</MenuItem>
+          </TextField>
 
-        <Button variant="contained" onClick={handleAddTest}>
-          Add Test
-        </Button>
-      </Box>
+          <Button variant="contained" onClick={handleAddTest}>
+            Add Test
+          </Button>
+        </Box>
+      ) : (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Only administrators can add new lab tests.
+        </Typography>
+      )}
 
       {loading && <Typography>Loading lab tests…</Typography>}
 
