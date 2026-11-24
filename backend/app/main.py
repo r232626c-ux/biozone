@@ -1,5 +1,6 @@
 # app/main.py
 import os
+import calendar
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
@@ -19,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 from passlib.context import CryptContext
 import app.schemas as schemas
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, JSON, ForeignKey, DateTime
 from jose import jwt
@@ -60,7 +61,92 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-app = FastAPI(title="Biozone Lab API")
+SUBSCRIPTION_EXEMPT_PATHS = {
+    ("GET", "/health"),
+    ("POST", "/token"),
+    ("POST", "/auth/change-password"),
+    ("POST", "/auth/password-reset"),
+    ("POST", "/auth/password-reset/confirm"),
+    ("GET", "/system-settings"),
+    ("POST", "/system-settings/verify-payment"),
+}
+
+
+def get_subscription_status(last_payment: datetime | None, now: datetime | None = None):
+    current_time = now or datetime.utcnow()
+    if current_time.tzinfo is not None:
+        current_time = current_time.astimezone(timezone.utc).replace(tzinfo=None)
+    if last_payment is None:
+        return {
+            "expires_at": None,
+            "days_remaining": 0,
+            "expired": True,
+        }
+    if last_payment.tzinfo is not None:
+        last_payment = last_payment.astimezone(timezone.utc).replace(tzinfo=None)
+
+    month_end = calendar.monthrange(last_payment.year, last_payment.month)[1]
+    expires_at = datetime(
+        last_payment.year,
+        last_payment.month,
+        month_end,
+        23,
+        59,
+        59,
+        999999,
+    )
+    return {
+        "expires_at": expires_at,
+        "days_remaining": max((expires_at.date() - current_time.date()).days, 0),
+        "expired": current_time > expires_at,
+    }
+
+
+async def require_active_subscription(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    path = request.url.path.rstrip("/") or "/"
+    if (
+        request.method == "OPTIONS"
+        or (request.method, path) in SUBSCRIPTION_EXEMPT_PATHS
+        or (
+            request.method == "GET"
+            and (
+                path == "/"
+                or path.startswith("/dashboard/")
+                or path.startswith("/assets/")
+            )
+        )
+    ):
+        return
+
+    result = await db.execute(
+        select(SystemSettings).order_by(SystemSettings.id).limit(1)
+    )
+    settings = result.scalar_one_or_none()
+    subscription = get_subscription_status(
+        settings.lastpaymentdate if settings else None
+    )
+    if subscription["expired"]:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "code": "SUBSCRIPTION_REQUIRED",
+                "message": "Subscription expired. Verify renewal to continue using Biozone.",
+                "subscriptionExpiresAt": (
+                    subscription["expires_at"].isoformat()
+                    if subscription["expires_at"]
+                    else None
+                ),
+            },
+        )
+
+
+app = FastAPI(
+    title="Biozone Lab API",
+    dependencies=[Depends(require_active_subscription)],
+)
 logger = logging.getLogger(__name__)
 
 # CORS - include local defaults and optional deployed frontend origins.
@@ -199,6 +285,65 @@ async def on_startup():
                     )
                 )
 
+        await conn.execute(
+            text(
+                "UPDATE users SET role = 'Medical Laboratory Scientist' "
+                "WHERE lower(trim(role)) IN "
+                "('lab technician', 'lab tech', 'labtech', 'labtechnician', "
+                "'lab', 'lab scientist', 'medical lab scientist', "
+                "'medical laboratory scientist')"
+            )
+        )
+        await conn.execute(
+            text(
+                "UPDATE users SET role = 'Reception' "
+                "WHERE lower(trim(role)) IN ('user', 'receptionist', 'reception')"
+            )
+        )
+        await conn.execute(
+            text(
+                "UPDATE audit_logs SET role = 'Medical Laboratory Scientist' "
+                "WHERE lower(trim(role)) IN "
+                "('lab technician', 'lab tech', 'labtech', 'labtechnician', "
+                "'lab', 'lab scientist', 'medical lab scientist', "
+                "'medical laboratory scientist')"
+            )
+        )
+        await conn.execute(
+            text(
+                "UPDATE audit_logs SET role = 'Reception' "
+                "WHERE lower(trim(role)) IN ('user', 'receptionist', 'reception')"
+            )
+        )
+
+        permission_rows = await conn.execute(
+            text(
+                "SELECT permission FROM role_permissions "
+                "WHERE lower(trim(role)) IN "
+                "('user', 'receptionist', 'reception', 'lab technician', "
+                "'lab tech', 'labtech', 'labtechnician', 'lab', 'lab scientist', "
+                "'medical lab scientist', 'medical laboratory scientist')"
+            )
+        )
+        shared_permissions = list(dict.fromkeys(row[0] for row in permission_rows))
+        await conn.execute(
+            text(
+                "DELETE FROM role_permissions WHERE lower(trim(role)) IN "
+                "('user', 'receptionist', 'reception', 'lab technician', "
+                "'lab tech', 'labtech', 'labtechnician', 'lab', 'lab scientist', "
+                "'medical lab scientist', 'medical laboratory scientist')"
+            )
+        )
+        for role_name in ("Medical Laboratory Scientist", "Reception"):
+            for permission in shared_permissions:
+                await conn.execute(
+                    text(
+                        "INSERT INTO role_permissions (role, permission) "
+                        "VALUES (:role, :permission)"
+                    ),
+                    {"role": role_name, "permission": permission},
+                )
+
     # Initialize admin and lab tests
     async with async_session() as db:
         await init_lab_tests(db)
@@ -220,6 +365,14 @@ async def init_lab_tests(db: AsyncSession):
         )
         for test in misplaced_tests.scalars():
             test.category = "Chemistry Tests"
+        bilharzia = await db.execute(
+            select(LabTest).where(
+                LabTest.name == "Bilharzia Serology",
+                LabTest.category == "Serology",
+            )
+        )
+        if bilharzia.scalar_one_or_none() is None:
+            db.add(LabTest(name="Bilharzia Serology", category="Serology"))
         await db.commit()
         return  # Database already has tests
 
@@ -236,7 +389,7 @@ async def init_lab_tests(db: AsyncSession):
         "CRP", "RF", "TORCH", "ANA", "Allergy", "Urine Drug Test",
         "Hepatitis A IgM", "Hepatitis C Antibody", "Rubella", "Measles IgG/IgM",
         "Varicella-Zoster IgG/IgM", "COVID-19 IgG/IgM", "Dengue NS1 IgM/IgG",
-        "Zika IgM", "Yellow Fever Antibody"
+        "Zika IgM", "Yellow Fever Antibody", "Bilharzia Serology"
     ],
 
     "Full Blood Count (FBC)": [
@@ -622,17 +775,42 @@ async def get_current_user(
 def normalize_role(role: str | None) -> str:
     if not role:
         return ""
-    return " ".join(role.strip().split()).lower()
+    normalized = " ".join(role.strip().replace("_", " ").replace("-", " ").split()).lower()
+    compact = normalized.replace(" ", "")
+    if normalized in {"user", "receptionist", "reception"}:
+        return "reception"
+    if normalized in {
+        "lab technician",
+        "lab tech",
+        "lab scientist",
+        "medical lab scientist",
+        "medical laboratory scientist",
+    } or compact in {
+        "labtech",
+        "labtechnician",
+        "medicallaboratoryscientist",
+        "medicallaboratoryscientist",
+        "mls",
+    }:
+        return "medical laboratory scientist"
+    return normalized
 
 
 def canonical_role(role: str | None) -> str:
     if not role:
         return ""
-    return " ".join(word.capitalize() for word in normalize_role(role).split())
+    normalized = normalize_role(role)
+    if normalized == "medical laboratory scientist":
+        return "Medical Laboratory Scientist"
+    if normalized == "reception":
+        return "Reception"
+    return " ".join(word.capitalize() for word in normalized.split())
 
 
-LAB_TECHNICIAN_EQUIVALENTS = {"lab technician", "lab technician", "lab tech", "labtech", "labtechnician", "lab"}
-ADMIN_EQUIVALENT_ROLES = {"admin", "lab technician", "lab scientist"} | LAB_TECHNICIAN_EQUIVALENTS
+ADMIN_EQUIVALENT_ROLES = {
+    "medical laboratory scientist",
+    "reception",
+}
 
 def role_required(*roles):
     allowed_roles = {normalize_role(r) for r in roles} | ADMIN_EQUIVALENT_ROLES
@@ -1114,7 +1292,7 @@ async def log_requests(request: Request, call_next):
 async def create_patient_route(
     patient: PatientCreate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Admin", "Lab Technician")),
+    user=Depends(role_required("Admin", "Medical Laboratory Scientist")),
     request: Request = None
 ):
     new_patient = await crud.create_patient(db, patient)
@@ -1152,7 +1330,7 @@ async def update_patient_route(
     patient_id: int, 
     patient_update: PatientUpdate, 
     db: AsyncSession = Depends(get_db), 
-    user=Depends(role_required("Admin", "Lab Technician")),
+    user=Depends(role_required("Admin", "Medical Laboratory Scientist")),
     request: Request = None
 ):
     patient = await crud.update_patient(db, patient_id, patient_update)
@@ -1411,7 +1589,7 @@ async def update_lab_request_endpoint(
 async def create_lab_result_route(
     payload: LabResultCreate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Lab Technician", "Admin", "Super Admin")),
+    user=Depends(role_required("Medical Laboratory Scientist", "Admin", "Super Admin")),
     request: Request = None
 ):
     result_data = await crud.create_lab_result(db, payload)
@@ -1474,7 +1652,7 @@ async def list_lab_results_route(
 async def save_lab_result(
     payload: schemas.LabResultSave,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Lab Technician", "Admin", "Super Admin")),
+    user=Depends(role_required("Medical Laboratory Scientist", "Admin", "Super Admin")),
     request: Request = None
 ):
     result = await crud.create_lab_result(db, payload)
@@ -1503,7 +1681,7 @@ async def update_lab_request_route(
     request_id: int,
     payload: LabRequestUpdate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Admin", "Lab Technician", "Super Admin")),
+    user=Depends(role_required("Admin", "Medical Laboratory Scientist", "Super Admin")),
 ):
     request_obj = await db.get(models.LabRequest, request_id)
     if not request_obj:
@@ -1531,7 +1709,7 @@ async def update_lab_request_route(
 async def recalc_lab_request_status(
     request_id: int,
     db: AsyncSession = Depends(get_db),
-    user=Depends(role_required("Admin", "Lab Technician", "Super Admin"))
+    user=Depends(role_required("Admin", "Medical Laboratory Scientist", "Super Admin"))
 ):
     result = await db.get(models.LabRequest, request_id)
     
@@ -1596,8 +1774,6 @@ async def confirm_password_reset(data: PasswordResetConfirm, db: AsyncSession = 
 from app.config import (
     is_valid_payment_code,
     get_code_license_type,
-    VALID_PAYMENT_CODE,
-    SUBSCRIPTION_PERIOD_DAYS
 )
 
 @app.get("/system-settings/", response_model=schemas.SystemSettingsOut)
@@ -1624,7 +1800,12 @@ async def get_system_settings(db: AsyncSession = Depends(get_db)):
             await db.commit()
             await db.refresh(settings)
         
-        return settings
+        subscription = get_subscription_status(settings.lastpaymentdate)
+        settings_out = schemas.SystemSettingsOut.model_validate(settings)
+        settings_out.subscription_expires_at = subscription["expires_at"]
+        settings_out.subscription_days_remaining = subscription["days_remaining"]
+        settings_out.subscription_expired = subscription["expired"]
+        return settings_out
     except Exception as e:
         print(f"Error fetching system settings: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch system settings")
@@ -1685,10 +1866,10 @@ async def verify_payment(
     payment_req: schemas.PaymentVerificationRequest,
     db: AsyncSession = Depends(get_db),
     request: Request = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(strict_role_required("Admin", "Super Admin")),
 ):
     """
-    Verify payment code and unlock system for next 60 days
+    Verify a renewal code and unlock the system through month-end.
     
     Checks against stored payment codes in database first,
     then falls back to config codes if not found
@@ -1704,20 +1885,20 @@ async def verify_payment(
             select(PaymentCode).where(
                 PaymentCode.code == code,
                 PaymentCode.validfrom <= today,
-                PaymentCode.validUntil >= today,
-                PaymentCode.isUsed == False
+                PaymentCode.validuntil >= today,
+                PaymentCode.isused.is_(False),
             )
         )
         payment_code = result.scalar()
         
         if payment_code:
             # Code found and is valid for current date
-            license_type = payment_code.licenseType
+            license_type = payment_code.licensetype
             period = payment_code.period
             
             # Mark code as used
-            payment_code.isUsed = True
-            payment_code.usedDate = datetime.utcnow()
+            payment_code.isused = True
+            payment_code.useddate = datetime.utcnow()
             
             # Update system settings
             result = await db.execute(select(SystemSettings))
@@ -1733,8 +1914,9 @@ async def verify_payment(
             
             await db.commit()
             await db.refresh(settings)
+            subscription = get_subscription_status(settings.lastpaymentdate)
             
-            print(f"[PAYMENT] Database code '{code}' ({period}) verified for license type '{license_type}'")
+            print(f"[PAYMENT] Database code verified ({period}, {license_type})")
             # Audit log: successful verification using DB code
             try:
                 ip = request.client.host if request and request.client else None
@@ -1752,7 +1934,10 @@ async def verify_payment(
 
             return schemas.PaymentVerificationResponse(
                 success=True,
-                message=f"Payment verified successfully! ({period} - {license_type}). System unlocked for {SUBSCRIPTION_PERIOD_DAYS} days.",
+                message=(
+                    "Subscription renewed through "
+                    f"{subscription['expires_at'].strftime('%B %d, %Y')}."
+                ),
                 lastPaymentDate=settings.lastpaymentdate
             )
         
@@ -1792,8 +1977,9 @@ async def verify_payment(
         
         await db.commit()
         await db.refresh(settings)
-        
-        print(f"[PAYMENT] Config code verified. License type '{license_type}'. System unlocked until {now + timedelta(days=SUBSCRIPTION_PERIOD_DAYS)}")
+        subscription = get_subscription_status(settings.lastpaymentdate)
+
+        print(f"[PAYMENT] Configured renewal code verified for {license_type}")
         try:
             ip = request.client.host if request and request.client else None
             await crud.create_audit_log(
@@ -1810,7 +1996,10 @@ async def verify_payment(
 
         return schemas.PaymentVerificationResponse(
             success=True,
-            message=f"Payment verified successfully! System unlocked for {SUBSCRIPTION_PERIOD_DAYS} days. ({license_type})",
+            message=(
+                "Subscription renewed through "
+                f"{subscription['expires_at'].strftime('%B %d, %Y')}."
+            ),
             lastPaymentDate=settings.lastpaymentdate
         )
     except Exception as e:
@@ -1822,7 +2011,8 @@ async def verify_payment(
 @app.get("/payment-codes/", response_model=schemas.PaymentCodesList)
 async def get_payment_codes(
     includeUsed: bool = False,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(strict_role_required("Admin", "Super Admin")),
 ):
     """Get all available payment codes (admin only)"""
     try:
@@ -1857,7 +2047,8 @@ async def get_payment_codes(
 @app.post("/payment-codes/create/", response_model=schemas.PaymentCodeOut)
 async def create_payment_code(
     code_data: schemas.PaymentCodeCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(strict_role_required("Admin", "Super Admin")),
 ):
     """Create a new payment code"""
     try:
@@ -1895,7 +2086,8 @@ async def create_payment_code(
 @app.post("/payment-codes/bulk-create/")
 async def bulk_create_payment_codes(
     codes_data: List[schemas.PaymentCodeCreate],
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(strict_role_required("Admin", "Super Admin")),
 ):
     """Create multiple payment codes at once"""
     try:
@@ -1994,8 +2186,20 @@ async def update_permissions(
         await db.execute(delete(models.RolePermission))
         await db.commit()
         
-        # Insert new permissions
+        normalized_permissions = {}
         for role, permissions in data.permissions.items():
+            role_name = canonical_role(role)
+            normalized_permissions.setdefault(role_name, set()).update(permissions)
+
+        shared_roles = ("Medical Laboratory Scientist", "Reception")
+        shared_permissions = set().union(
+            *(normalized_permissions.get(role, set()) for role in shared_roles)
+        )
+        for role in shared_roles:
+            normalized_permissions[role] = shared_permissions
+
+        # Insert canonical role permissions; these two roles share one permission set.
+        for role, permissions in normalized_permissions.items():
             for permission in permissions:
                 perm_obj = models.RolePermission(
                     role=role,

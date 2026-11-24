@@ -20,7 +20,7 @@ export default function AdminCreateUser() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("reception");
 
   const [loading, setLoading] = useState(true);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -53,7 +53,7 @@ export default function AdminCreateUser() {
         }
 
         setCheckingAdmin(false);
-      } catch (err) {
+      } catch {
         navigate("/login");
       } finally {
         setLoading(false);
@@ -78,7 +78,7 @@ export default function AdminCreateUser() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(
+      await axios.post(
         `${API_URL}/admin/create-user`,
         { username, password, email, role },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -89,7 +89,7 @@ export default function AdminCreateUser() {
       setUsername("");
       setPassword("");
       setEmail("");
-      setRole("user");
+      setRole("reception");
     } catch (err) {
       let detail = err.response?.data?.detail;
       if (Array.isArray(detail)) detail = detail.map(d => d.msg).join(", ");
@@ -174,9 +174,9 @@ export default function AdminCreateUser() {
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
-          <MenuItem value="user">User</MenuItem>
+          <MenuItem value="reception">Reception</MenuItem>
           <MenuItem value="doctor">Doctor</MenuItem>
-          <MenuItem value="labtech">Lab Technician</MenuItem>
+          <MenuItem value="medical_laboratory_scientist">Medical Laboratory Scientist</MenuItem>
           <MenuItem value="admin">Admin</MenuItem>
         </TextField>
 

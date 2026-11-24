@@ -31,6 +31,9 @@ const defaultSettings = {
   dataRetentionDays: 365,
   lastPaymentDate: null,
   paymentStatus: "inactive",
+  subscriptionExpiresAt: null,
+  subscriptionDaysRemaining: 0,
+  subscriptionExpired: true,
 };
 
 const getErrorMessage = (error, fallback) => {
@@ -52,7 +55,15 @@ const SystemSettings = () => {
   const [systemLocked, setSystemLocked] = useState(false);
   const [daysUntilPayment, setDaysUntilPayment] = useState(0);
 
-  const checkPaymentStatus = (lastPayment) => {
+  const checkPaymentStatus = (lastPayment, serverStatus = {}) => {
+    if (typeof serverStatus.subscriptionExpired === "boolean") {
+      const daysRemaining = Number(serverStatus.subscriptionDaysRemaining) || 0;
+      setSystemLocked(serverStatus.subscriptionExpired);
+      setDaysUntilPayment(daysRemaining);
+      if (serverStatus.subscriptionExpired) setPaymentDialogOpen(true);
+      return;
+    }
+
     if (!lastPayment) {
       setSystemLocked(true);
       setDaysUntilPayment(0);
@@ -66,12 +77,21 @@ const SystemSettings = () => {
       return;
     }
 
-    const daysElapsed = Math.floor(
-      (Date.now() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24)
+    const expiresAt = new Date(
+      lastPaymentDate.getFullYear(),
+      lastPaymentDate.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
     );
-    const daysRemaining = 60 - daysElapsed;
+    const daysRemaining = Math.max(
+      0,
+      Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    );
 
-    if (daysRemaining <= 0) {
+    if (Date.now() > expiresAt.getTime()) {
       setSystemLocked(true);
       setPaymentDialogOpen(true);
       setDaysUntilPayment(0);
@@ -96,7 +116,7 @@ const SystemSettings = () => {
 
       setSettings({ ...defaultSettings, ...response.data });
       setLoaded(true);
-      checkPaymentStatus(response.data.lastPaymentDate);
+      checkPaymentStatus(response.data.lastPaymentDate, response.data);
     } catch (error) {
       console.error("Failed to load system settings", error);
       setLoadError(getErrorMessage(error, "Failed to load settings."));
@@ -139,17 +159,11 @@ const SystemSettings = () => {
         return;
       }
 
-      const paymentDate = response.data.lastPaymentDate || new Date().toISOString();
-      setSettings((current) => ({
-        ...current,
-        lastPaymentDate: paymentDate,
-        paymentStatus: "active",
-      }));
-      setMessage(response.data.message || "Payment verified. System unlocked.");
-      setMessageType("success");
       setPaymentCode("");
       setPaymentDialogOpen(false);
-      checkPaymentStatus(paymentDate);
+      await fetchSettings();
+      setMessage(response.data.message || "Payment verified. System unlocked.");
+      setMessageType("success");
     } catch (error) {
       console.error("Payment verification failed", error);
       setMessage(getErrorMessage(error, "Payment verification failed."));
@@ -294,9 +308,15 @@ const SystemSettings = () => {
                   ? new Date(settings.lastPaymentDate).toLocaleDateString()
                   : "No payment recorded"}
               </Typography>
-              {daysUntilPayment > 0 && daysUntilPayment <= 7 && (
+              {settings.subscriptionExpiresAt && (
+                <Typography variant="body2" color="text.secondary">
+                  Renewal deadline:{" "}
+                  {new Date(settings.subscriptionExpiresAt).toLocaleDateString()}
+                </Typography>
+              )}
+              {daysUntilPayment <= 7 && !systemLocked && (
                 <Typography variant="body2" sx={{ mt: 0.5, color: "#a8510a" }}>
-                  Payment due in {daysUntilPayment} days.
+                  Renew by month-end to avoid system interruption.
                 </Typography>
               )}
             </Box>

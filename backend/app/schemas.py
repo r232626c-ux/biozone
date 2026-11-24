@@ -261,6 +261,13 @@ class SystemSettingsOut(SystemSettingsBase):
     id: int
     lastpaymentdate: Optional[datetime] = Field(default=None, alias="lastPaymentDate")
     paymentstatus: str = Field(default="inactive", alias="paymentStatus")
+    subscription_expires_at: Optional[datetime] = Field(
+        default=None, alias="subscriptionExpiresAt"
+    )
+    subscription_days_remaining: int = Field(
+        default=0, alias="subscriptionDaysRemaining"
+    )
+    subscription_expired: bool = Field(default=True, alias="subscriptionExpired")
     created_at: datetime
     updated_at: datetime
 

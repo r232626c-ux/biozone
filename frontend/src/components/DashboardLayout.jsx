@@ -1,7 +1,9 @@
 // src/components/DashboardLayout.jsx
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
+  Alert,
   Box,
   AppBar,
   Drawer,
@@ -16,6 +18,12 @@ import {
   Tooltip,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
 } from "@mui/material";
 
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -30,6 +38,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import MenuIcon from "@mui/icons-material/Menu";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import { API_URL } from "../utils/api";
 
 const expandedWidth = 252;
 const collapsedWidth = 72;
@@ -55,6 +64,78 @@ const DashboardLayout = () => {
     .toLowerCase()
     .replace(/[\s_-]/g, "");
   const canAccessAuditLogs = normalizedRole === "admin" || normalizedRole === "superadmin";
+  const canRenewSubscription = canAccessAuditLogs;
+  const [subscription, setSubscription] = useState(null);
+  const [subscriptionChecked, setSubscriptionChecked] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState("");
+  const [renewalCode, setRenewalCode] = useState("");
+  const [renewalError, setRenewalError] = useState("");
+  const [renewing, setRenewing] = useState(false);
+  const token = localStorage.getItem("token");
+
+  const refreshSubscription = useCallback(async () => {
+    const response = await axios.get(`${API_URL}/system-settings/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setSubscription(response.data);
+    setSubscriptionChecked(true);
+    setSubscriptionError("");
+  }, [token]);
+
+  useEffect(() => {
+    let active = true;
+    refreshSubscription().catch((error) => {
+      console.error("Could not load subscription status", error);
+      if (active) {
+        const detail = error.response?.data?.detail;
+        setSubscriptionChecked(true);
+        setSubscriptionError(
+          typeof detail === "string"
+            ? detail
+            : detail?.message ||
+              "Could not check the subscription status. Contact an administrator."
+        );
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [refreshSubscription]);
+
+  const handleRenewSubscription = async () => {
+    if (!renewalCode.trim()) {
+      setRenewalError("Enter the subscription renewal code.");
+      return;
+    }
+
+    setRenewing(true);
+    setRenewalError("");
+    try {
+      const response = await axios.post(
+        `${API_URL}/system-settings/verify-payment/`,
+        { code: renewalCode.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.data.success) {
+        setRenewalError(response.data.message || "Invalid renewal code.");
+        return;
+      }
+      setRenewalCode("");
+      await refreshSubscription();
+    } catch (error) {
+      console.error("Subscription renewal failed", error);
+      const detail = error.response?.data?.detail;
+      setRenewalError(
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((item) => item.msg).join(", ")
+            : detail?.message || "Could not verify the subscription code."
+      );
+    } finally {
+      setRenewing(false);
+    }
+  };
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard/lab" },
@@ -217,9 +298,87 @@ const DashboardLayout = () => {
         }}
       >
         <Box className="dashboard-content" sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-          <Outlet />
+          {subscriptionError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {subscriptionError}
+            </Alert>
+          )}
+          {subscription &&
+            !subscription.subscriptionExpired &&
+            subscription.subscriptionDaysRemaining <= 7 && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Subscription expires{" "}
+                {subscription.subscriptionExpiresAt
+                  ? `on ${new Date(subscription.subscriptionExpiresAt).toLocaleDateString()}`
+                  : "at the end of this month"}
+                . Renew before month-end to avoid interruption.
+              </Alert>
+            )}
+          {subscriptionChecked && !subscription?.subscriptionExpired ? (
+            <Outlet />
+          ) : !subscriptionChecked ? (
+            <Typography role="status" color="text.secondary">
+              Checking subscription...
+            </Typography>
+          ) : null}
         </Box>
       </Box>
+
+      <Dialog
+        open={Boolean(subscription?.subscriptionExpired)}
+        onClose={() => {}}
+        disableEscapeKeyDown
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Subscription renewal required</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {subscription?.subscriptionExpiresAt
+              ? "Biozone is locked because the subscription expired at the end of the month."
+              : "Biozone is locked because no active subscription is recorded."}{" "}
+            Verify a renewal code to restore access.
+          </Alert>
+          {canRenewSubscription ? (
+            <>
+              {renewalError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {renewalError}
+                </Alert>
+              )}
+              <TextField
+                autoFocus
+                fullWidth
+                label="Subscription renewal code"
+                value={renewalCode}
+                onChange={(event) => setRenewalCode(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !renewing) {
+                    handleRenewSubscription();
+                  }
+                }}
+                autoComplete="off"
+                disabled={renewing}
+              />
+            </>
+          ) : (
+            <Typography color="text.secondary">
+              Ask an administrator to verify the subscription renewal.
+            </Typography>
+          )}
+        </DialogContent>
+        {canRenewSubscription && (
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleRenewSubscription}
+              disabled={renewing}
+            >
+              {renewing ? "Verifying..." : "Verify renewal"}
+            </Button>
+          </DialogActions>
+        )}
+      </Dialog>
     </Box>
   );
 };

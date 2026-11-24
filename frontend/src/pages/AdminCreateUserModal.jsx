@@ -13,11 +13,22 @@ import axios from "axios";
 
 import { API_URL } from "../utils/api";
 
+const getRoleValue = (role) => {
+  const normalized = String(role || "").trim().toLowerCase().replace(/[\s_-]/g, "");
+  if (["user", "receptionist", "reception"].includes(normalized)) return "reception";
+  if (
+    ["labtech", "labtechnician", "labscientist", "medicallabscientist", "medicallaboratoryscientist", "mls"].includes(normalized)
+  ) {
+    return "medical_laboratory_scientist";
+  }
+  return normalized || "reception";
+};
+
 export default function AdminCreateUserModal({ onClose, editingUser }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("reception");
 
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState("success");
@@ -30,12 +41,12 @@ export default function AdminCreateUserModal({ onClose, editingUser }) {
     if (editingUser) {
       setUsername(editingUser.username);
       setEmail(editingUser.email);
-      setRole(editingUser.role);
+      setRole(getRoleValue(editingUser.role));
       setPassword(""); // Password is optional on edit
     } else {
       setUsername("");
       setEmail("");
-      setRole("user");
+      setRole("reception");
       setPassword("");
     }
     setMessage(null);
@@ -73,7 +84,7 @@ export default function AdminCreateUserModal({ onClose, editingUser }) {
         setMessage(`User '${username}' created successfully`);
         setUsername("");
         setEmail("");
-        setRole("user");
+        setRole("reception");
         setPassword("");
       }
 
@@ -146,9 +157,9 @@ export default function AdminCreateUserModal({ onClose, editingUser }) {
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
-          <MenuItem value="user">User</MenuItem>
+          <MenuItem value="reception">Reception</MenuItem>
           <MenuItem value="doctor">Doctor</MenuItem>
-          <MenuItem value="labtech">Lab Technician</MenuItem>
+          <MenuItem value="medical_laboratory_scientist">Medical Laboratory Scientist</MenuItem>
           <MenuItem value="admin">Admin</MenuItem>
         </TextField>
       </DialogContent>

@@ -50,14 +50,30 @@ const permissionGroups = [
   },
 ];
 
-const defaultRoles = ["Admin", "Doctor", "Lab Technician", "User"];
-const canonicalRoleName = (role) =>
-  String(role)
-    .trim()
-    .split(/\s+/)
+const defaultRoles = [
+  "Admin",
+  "Doctor",
+  "Medical Laboratory Scientist",
+  "Reception",
+];
+const canonicalRoleName = (role) => {
+  const normalized = String(role).trim().toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ");
+  const compact = normalized.replace(/\s/g, "");
+  if (["user", "receptionist", "reception"].includes(normalized)) return "Reception";
+  if (
+    ["lab technician", "lab tech", "lab scientist", "medical lab scientist", "medical laboratory scientist"].includes(normalized) ||
+    ["labtech", "labtechnician", "lab", "labscientist", "mls"].includes(compact)
+  ) {
+    return "Medical Laboratory Scientist";
+  }
+  return normalized
+    .split(" ")
     .filter(Boolean)
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
     .join(" ");
+};
+
+const sharedAccessRoles = ["Medical Laboratory Scientist", "Reception"];
 
 const RolePermissions = () => {
   const [availableRoles, setAvailableRoles] = useState(defaultRoles);
@@ -100,6 +116,12 @@ const RolePermissions = () => {
           return [role, [...new Set(assignedPermissions)]];
         })
       );
+      const sharedPermissions = [
+        ...new Set(sharedAccessRoles.flatMap((role) => permissionMap[role] || [])),
+      ];
+      sharedAccessRoles.forEach((role) => {
+        permissionMap[role] = sharedPermissions;
+      });
       setAvailableRoles(roleNames);
       setSelectedPermissions(permissionMap);
       setLoaded(true);
@@ -136,7 +158,13 @@ const RolePermissions = () => {
       const updatedPermissions = rolePermissions.includes(permission)
         ? rolePermissions.filter((item) => item !== permission)
         : [...rolePermissions, permission];
-      return { ...current, [role]: updatedPermissions };
+      const updates = { ...current, [role]: updatedPermissions };
+      if (sharedAccessRoles.includes(role)) {
+        sharedAccessRoles.forEach((sharedRole) => {
+          updates[sharedRole] = updatedPermissions;
+        });
+      }
+      return updates;
     });
   };
 

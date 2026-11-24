@@ -69,7 +69,12 @@ const LabRequestsPage = () => {
   const parsedUser = storedUser ? JSON.parse(storedUser) : null;
   const role = parsedUser?.role || localStorage.getItem("role") || "";
   const normalizedRole = String(role).trim().toLowerCase().replace(/[\s_-]/g, "");
-  const canEditRequests = ["admin", "superadmin", "labtech", "labtechnician"].includes(normalizedRole);
+  const canEditRequests = [
+    "admin",
+    "superadmin",
+    "medicallaboratoryscientist",
+    "reception",
+  ].includes(normalizedRole);
 
   /* ================= FETCH LAB REQUESTS ================= */
   const loadRequests = useCallback(async () => {
@@ -314,7 +319,7 @@ const LabRequestsPage = () => {
                             View
                           </Button>
 
-                          {(normalizedRole === "admin" || normalizedRole === "labtech" || normalizedRole === "labtechnician") && (
+                          {canEditRequests && (
                             <Button size="small" color="secondary">
                               Authorize
                             </Button>

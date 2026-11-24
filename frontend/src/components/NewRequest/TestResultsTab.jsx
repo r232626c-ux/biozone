@@ -284,6 +284,11 @@ const lab_reference = {
       // comment: "REACTIVE: likely syphilis — confirm with treponemal test; titer helps stage/monitor therapy. NON-REACTIVE: no serologic evidence, but early window possible.",
       calculation: "Non-treponemal + treponemal algorithms"
     },
+    "Bilharzia Serology": {
+      unit: "Reactive/Non-reactive",
+      reference: { all: ["Non-reactive"] },
+      calculation: "Serological antibody assay"
+    },
     "H.pylori": {
       unit: "Reactive/Non-reactive (or IgG titer)",
       reference: { all: ["Non-reactive"] },
@@ -2542,7 +2547,7 @@ const default_tests = {
     "HIV test","BhCG","Widal","HbsAg","HSV","Syphilis","H.pylori","CRP","RF","TORCH",
     "ANA","Allergy","Urine Drug Test","Hepatitis A IgM","Hepatitis C Antibody",
     "Rubella","Measles IgG/IgM","Varicella-Zoster IgG/IgM","COVID-19 IgG/IgM",
-    "Dengue NS1 IgM/IgG","Zika IgM","Yellow Fever Antibody"
+    "Dengue NS1 IgM/IgG","Zika IgM","Yellow Fever Antibody","Bilharzia Serology"
   ],
   "Full Blood Count (FBC)": [
     "WBC","RBC","HB","HCT","MCV","MCH","MCHC","RDW","Platelets",

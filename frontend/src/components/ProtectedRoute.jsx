@@ -5,10 +5,16 @@ function normalizeRole(role = "") {
   const roleMap = {
     admin: "admin",
     doctor: "doctor",
-    user: "user",
-    labtech: "labtech",
-    labtechnician: "labtech",
-    lab: "labtech",
+    user: "reception",
+    reception: "reception",
+    receptionist: "reception",
+    labtech: "medicallaboratoryscientist",
+    labtechnician: "medicallaboratoryscientist",
+    lab: "medicallaboratoryscientist",
+    labscientist: "medicallaboratoryscientist",
+    medicallabscientist: "medicallaboratoryscientist",
+    medicallaboratoryscientist: "medicallaboratoryscientist",
+    mls: "medicallaboratoryscientist",
   };
   return roleMap[key] || key;
 }

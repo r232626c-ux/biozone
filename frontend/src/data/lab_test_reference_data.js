@@ -139,6 +139,12 @@ export const lab_reference = {
       comment: "REACTIVE: likely syphilis — confirm with treponemal test; titer helps stage/monitor therapy. NON-REACTIVE: no serologic evidence, but early window possible.",
       calculation: "Non-treponemal + treponemal algorithms"
     },
+    "Bilharzia Serology": {
+      unit: "Reactive/Non-reactive",
+      reference: { all: ["Non-reactive"] },
+      comment: "Interpret according to the assay method and clinical context; serology may reflect current or past exposure.",
+      calculation: "Serological antibody assay"
+    },
     "H.pylori": {
       unit: "Reactive/Non-reactive (or IgG titer)",
       reference: { all: ["Non-reactive"] },

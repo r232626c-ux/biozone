@@ -200,11 +200,8 @@ const NewRequestPage = () => {
                 comment: r.comment || "",
               }));
 
-              console.log("🔍 DEBUG: Loaded tests from URL:", loadedTests.map(t => ({ name: t.name, category: t.category })));
-
               // 🔧 FIX: If any FBC test is present, ensure Monocytes and Monocytes (%) are included
               const hasFBCTest = loadedTests.some((t) => t.category === "Full Blood Count (FBC)");
-              console.log("🔍 DEBUG: Has FBC test?", hasFBCTest);
               
               let testsToSet = loadedTests;
 
@@ -214,8 +211,6 @@ const NewRequestPage = () => {
                     String(t.name || "").toLowerCase().replace(/\s+/g, "").replace(/[()%]/g, "")
                   )
                 );
-
-                console.log("🔍 DEBUG: Normalized loaded tests:", Array.from(normalizedLoaded));
 
                 // Ensure these critical FBC tests are present
                 const missingFBC = [];
@@ -229,8 +224,6 @@ const NewRequestPage = () => {
                     .toLowerCase()
                     .replace(/\s+/g, "")
                     .replace(/[()%]/g, "");
-                  console.log("🔍 DEBUG: Checking FBC test:", fbcTest.name, "normKey:", normKey, "exists?", normalizedLoaded.has(normKey));
-                  
                   if (!normalizedLoaded.has(normKey)) {
                     missingFBC.push({
                       ...fbcTest,
@@ -244,11 +237,9 @@ const NewRequestPage = () => {
                   }
                 });
 
-                console.log("🔍 DEBUG: Missing FBC tests injected:", missingFBC.map(t => t.name));
                 testsToSet = [...loadedTests, ...missingFBC];
               }
 
-              console.log("🔍 DEBUG: Tests to set before normalize:", testsToSet.map(t => ({ name: t.name, category: t.category })));
               setSelectedTests(normalizeSelectedTests(testsToSet));
               setTab(2);
             } else if (!isNavigationEdit && savedTestsArray) {
@@ -312,18 +303,14 @@ const NewRequestPage = () => {
 
     const target = normKey(normalizedName);
     
-    console.log("🔍 DEBUG getTestCategory for:", testName, "normalized:", normalizedName, "normKey:", target);
-
     for (const [category, tests] of Object.entries(lab_reference)) {
       for (const key of Object.keys(tests)) {
         if (normKey(key) === target) {
-          console.log("  → Found in category:", category, "key:", key);
           return category;
         }
       }
     }
 
-    console.log("  → NOT FOUND, defaulting to 'Other'");
     return "Other"; // Default fallback
   };
 
@@ -348,8 +335,6 @@ const NewRequestPage = () => {
   const normalizeSelectedTests = (tests) => {
     if (!Array.isArray(tests)) return [];
 
-    console.log("🔍 DEBUG normalizeSelectedTests input:", tests.map(t => ({ name: t.name, category: t.category, id: t.id })));
-
     const uniqueTests = [];
     const seen = new Set();
 
@@ -367,16 +352,11 @@ const NewRequestPage = () => {
           name: normalizedName,
           category: currentCategory || "Other",
         });
-      } else {
-        console.log("🔍 DEBUG normalizeSelectedTests: Skipped duplicate:", { original: test.name, normalized: normalizedName, category: currentCategory, key });
       }
     });
 
     const reordered = uniqueTests.map((test) => ({ ...test }));
     const fbcTests = reordered.filter((test) => test.category === "Full Blood Count (FBC)");
-
-    console.log("🔍 DEBUG normalizeSelectedTests output (before FBC sort):", reordered.map(t => ({ name: t.name, category: t.category, id: t.id })));
-    console.log("🔍 DEBUG FBC tests found:", fbcTests.map(t => ({ name: t.name, id: t.id })));
 
     if (fbcTests.length > 0) {
       const sortedFbc = fbcTests.slice().sort((a, b) => {
@@ -388,8 +368,6 @@ const NewRequestPage = () => {
         return aIndex - bIndex;
       });
 
-      console.log("🔍 DEBUG FBC tests after sort:", sortedFbc.map(t => ({ name: t.name, order: FBC_ORDER.indexOf(t.name) })));
-
       let fbcIndex = 0;
       return reordered.map((test) =>
         test.category === "Full Blood Count (FBC)" ? sortedFbc[fbcIndex++] : test
@@ -398,19 +376,6 @@ const NewRequestPage = () => {
 
     return reordered;
   };
-
-  // Check backend connectivity on mount
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      console.log("🔌 Testing backend connectivity...");
-      axios.get(`${API_URL}/patients/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(() => console.log("✅ Backend is reachable"))
-        .catch(err => console.error("❌ Backend connection failed:", err.message));
-    }
-  }, []);
 
   const age = useMemo(
     () => (patient.dob ? dayjs().diff(dayjs(patient.dob), "year") : ""),
@@ -547,10 +512,8 @@ const NewRequestPage = () => {
   };
 
   const handleTabChange = async (event, newTab) => {
-    console.log("🔄 Tab change from", tab, "to", newTab);
     if (tab !== newTab) {
       const shouldSave = hasPatientFormData() || selectedTests.length > 0;
-      console.log("💾 Should save:", shouldSave, "hasData:", hasPatientFormData(), "tests:", selectedTests.length);
       if (shouldSave) {
         await handleSave({ auto: true });
       }

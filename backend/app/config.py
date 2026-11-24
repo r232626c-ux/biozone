@@ -3,6 +3,7 @@ Configuration file for BIOZONE Lab System
 Manage payment codes, system settings, and environment variables
 """
 import os
+import hmac
 from datetime import datetime
 
 # ==============================
@@ -11,17 +12,13 @@ from datetime import datetime
 
 # Payment verification code - Change this to your actual code
 # This is the code customers must enter to verify their payment
-VALID_PAYMENT_CODE = os.getenv("PAYMENT_CODE", "BIOZONE2024")
-
-# Subscription period in days (default 60 = 2 months)
-SUBSCRIPTION_PERIOD_DAYS = int(os.getenv("SUBSCRIPTION_DAYS", "60"))
+VALID_PAYMENT_CODE = os.getenv("PAYMENT_CODE", "").strip().upper()
+SUBSCRIPTION_UNLOCK_CODE = os.getenv("SUBSCRIPTION_UNLOCK_CODE", "").strip().upper()
 
 # Additional codes for specific licenses (optional)
 # Format: {"LICENSE_NAME": "CODE"}
 ADDITIONAL_PAYMENT_CODES = {
-    "DEMO": "DEMO2024",
-    "ENTERPRISE": "ENTERPRISE2024",
-    "STANDARD": "STANDARD2024",
+    # Configure additional codes through the database payment-code workflow.
 }
 
 # ==============================
@@ -61,10 +58,18 @@ def is_valid_payment_code(code: str) -> bool:
     Returns:
         bool: True if code is valid, False otherwise
     """
-    if code == VALID_PAYMENT_CODE:
+    code = code.strip().upper()
+    if any(
+        configured and hmac.compare_digest(code, configured)
+        for configured in (VALID_PAYMENT_CODE, SUBSCRIPTION_UNLOCK_CODE)
+    ):
         return True
-    
-    if code in ADDITIONAL_PAYMENT_CODES.values():
+
+    if any(
+        hmac.compare_digest(code, configured)
+        for configured in ADDITIONAL_PAYMENT_CODES.values()
+        if configured
+    ):
         return True
     
     return False
@@ -80,11 +85,14 @@ def get_code_license_type(code: str) -> str:
     Returns:
         str: License type (STANDARD, DEMO, ENTERPRISE) or "UNKNOWN"
     """
-    if code == VALID_PAYMENT_CODE:
+    code = code.strip().upper()
+    if VALID_PAYMENT_CODE and hmac.compare_digest(code, VALID_PAYMENT_CODE):
+        return "STANDARD"
+    if SUBSCRIPTION_UNLOCK_CODE and hmac.compare_digest(code, SUBSCRIPTION_UNLOCK_CODE):
         return "STANDARD"
     
     for license_type, license_code in ADDITIONAL_PAYMENT_CODES.items():
-        if code == license_code:
+        if license_code and hmac.compare_digest(code, license_code):
             return license_type
     
     return "UNKNOWN"
@@ -113,8 +121,6 @@ In main.py, import and use:
 from app.config import (
     is_valid_payment_code,
     get_code_license_type,
-    VALID_PAYMENT_CODE,
-    SUBSCRIPTION_PERIOD_DAYS
 )
 
 Then in the verify_payment endpoint:

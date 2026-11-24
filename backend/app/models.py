@@ -157,14 +157,14 @@ class SystemSettings(Base):
     __tablename__ = "system_settings"
 
     id = Column(Integer, primary_key=True, index=True)
-    labname = Column(String, default="BIOZONE Lab")
-    turnaroundtime = Column(String, default="24")
-    enablenotifications = Column(Boolean, default=True)
-    maintenancemode = Column(Boolean, default=False)
-    defaultreportformat = Column(String, default="PDF")
-    dataretentiondays = Column(Integer, default=365)
-    lastpaymentdate = Column(DateTime, nullable=True)
-    paymentstatus = Column(String, default="inactive")
-    verificationcode = Column(String, nullable=True)  # Hashed verification code
+    labname = Column("labName", String, default="BIOZONE Lab")
+    turnaroundtime = Column("turnaroundTime", String, default="24")
+    enablenotifications = Column("enableNotifications", Boolean, default=True)
+    maintenancemode = Column("maintenanceMode", Boolean, default=False)
+    defaultreportformat = Column("defaultReportFormat", String, default="PDF")
+    dataretentiondays = Column("dataRetentionDays", Integer, default=365)
+    lastpaymentdate = Column("lastPaymentDate", DateTime, nullable=True)
+    paymentstatus = Column("paymentStatus", String, default="inactive")
+    verificationcode = Column("verificationCode", String, nullable=True)  # Hashed verification code
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

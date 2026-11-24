@@ -277,7 +277,13 @@ const UserManagement = () => {
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => {
-                  const role = String(user.role || "User");
+                  const rawRole = String(user.role || "Reception");
+                  const normalizedRole = rawRole.trim().toLowerCase().replace(/[\s_-]/g, "");
+                  const role = ["user", "receptionist", "reception"].includes(normalizedRole)
+                    ? "Reception"
+                    : ["labtech", "labtechnician", "labscientist", "medicallabscientist", "medicallaboratoryscientist", "mls"].includes(normalizedRole)
+                      ? "Medical Laboratory Scientist"
+                      : rawRole;
                   const isPrivileged = ["admin", "super admin"].includes(
                     role.toLowerCase()
                   );
